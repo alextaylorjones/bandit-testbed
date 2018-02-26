@@ -1,4 +1,4 @@
-
+import numpy as np
 """
 This class holds all bandit policies and is accessed to make arm selection decisions
 """
@@ -23,7 +23,7 @@ class BanditPlayer:
     def initMATS(self,teamTaskModel):
         print "Init MA-TS"
         #
-        self.armModel = teamtaskModel
+        self.armModel = teamTaskModel
 
 
     def initNaiveTS(self,naiveArmModel):
@@ -44,8 +44,9 @@ class BanditPlayer:
 
             s = np.random.uniform()
             total_weight = 0
+            sampled_param = None
 
-            for p in armModel.getParamSpace():
+            for p in self.armModel.getParamSpace():
                 w = p[2]
                 total_weight = total_weight + w
                 if (total_weight >= s):
@@ -54,7 +55,7 @@ class BanditPlayer:
 
             #ensure we made a selection
             assert(sampled_param != None)
-            return armModel.getOptArm(sampled_param)
+            return self.armModel.getOptArm(sampled_param)
 
         elif (self.name == "naive-TS"):
             
@@ -63,7 +64,7 @@ class BanditPlayer:
                 s = np.random.uniform()
                 total_weight = 0
 
-                sampledParam = None
+                sampled_param = None
 
                 for p in armModel.getParamSpace(a):
                     w = p[1]

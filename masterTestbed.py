@@ -17,7 +17,7 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 500
+    numMaps = 10
     ttmResolution = 0.1
 
     #params for naive-TS
@@ -69,6 +69,10 @@ if __name__ == "__main__":
             elif (a == "naive-TS"):
                 bp[a] = BanditPlayer(a)
                 bp[a].initNaiveTS(nam)
+            elif (a == "UCB1"):
+                # do nothing
+                bp[a] = BanditPlayer(a)
+                bp[a].initUCB1(numArms)
             else:
                 print "Algorithm type ", a, " does not exist"
 
@@ -80,7 +84,7 @@ if __name__ == "__main__":
             rewards = ttm.generateAllArmRewards(horizon)
 
             for a in algorithms:
-                chosenArm = (bp[a]).chooseNextArm()
+                chosenArm = (bp[a]).chooseNextArm(t)
                 if (DEBUG):
                     print "Choosing arm ",chosenArm," for alg ",a
 

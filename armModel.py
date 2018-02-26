@@ -66,6 +66,7 @@ class TeamTaskModel:
         #calculate expected success rate for all pts in space
     
         for j,(x,M,w) in enumerate(self.paramSpace):
+            print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
             for i,team in enumerate(teams):
                 # mapping team into latent space
                 latentImage = np.dot(team,M)
