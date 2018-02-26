@@ -56,6 +56,7 @@ if __name__ == "__main__":
         else:
             print "No arm scheme by name",
             print ARM_SCHEME
+            assert(False)
 
         for a in algorithms:
             if (DEBUG):
@@ -88,7 +89,7 @@ if __name__ == "__main__":
                 if (DEBUG):
                     print "Choosing arm ",chosenArm," for alg ",a
 
-                (bp[a]).updateRewards(chosenArm,rewards[chosenArm])
+                (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
 
 
 

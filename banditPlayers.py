@@ -1,4 +1,5 @@
 import numpy as np
+import math
 """
 This class holds all bandit policies and is accessed to make arm selection decisions
 """
@@ -47,6 +48,7 @@ class BanditPlayer:
             sampled_param = None
 
             for p in self.armModel.getParamSpace():
+                #params are (task,map,weight) lists
                 w = p[2]
                 total_weight = total_weight + w
                 if (total_weight >= s):
@@ -60,39 +62,41 @@ class BanditPlayer:
         elif (self.name == "naive-TS"):
             
             sampledParams = []
-            for a in armModel.getArms():
+            for a in self.armModel.getArms():
                 s = np.random.uniform()
                 total_weight = 0
 
                 sampled_param = None
 
-                for p in armModel.getParamSpace(a):
+                for p in self.armModel.getParamSpace(a):
                     w = p[1]
                     total_weight = total_weight + w
                     if (total_weight >= s):
                         sampled_param = p
                         break
-                assert(sampledParam != None)
+                assert(sampled_param != None)
                 #just append param value to list
-                sampledParams.append(sampledParam[1])
+                sampledParams.append(sampled_param[1])
                  
 
             #ensure we made a selection
             assert(sampledParams != [])
-            return np.argmin(sampledParams)
+            #and choose arm with highest param, aka highest mean
+            return np.argmax(sampledParams)
 
         elif (self.name == "UCB1"):
             confidence = []
             i = 0
+
+            #Calculate confidence intervals
             for (numPlays,armMean) in self.armStatsUCB:
                 #make sure all arms played at least once
                 if (numPlays == 0):
                     return i
-
-                confidence.append(armMean + float(math.sqrt(2* math.log(t)/numPlays)))
+                confidence.append(armMean + float(math.sqrt(2* math.log(t+3)/numPlays)))
                 i = i + 1
 
-            return np.argmin(confidence)
+            return np.argmax(confidence)
         else:
             print "Error: No bandit player policy with name",self.name
             return None
@@ -110,7 +114,7 @@ class BanditPlayer:
             #update empirical mean
             self.armStatsUCB[armIndex][1] = newReward / self.armStatsUCB[armIndex][0]
         elif (self.name == "MA-TS"):
-            expSuccessRates = armModel.getSuccessRateDict()
+            expSuccessRates = self.armModel.getSuccessRateDict()
 
             if (rewardValue == 0):
                 for j,(x,M,w) in enumerate(self.armModel.getParamSpace()):

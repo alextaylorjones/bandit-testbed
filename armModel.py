@@ -28,8 +28,8 @@ class TeamTaskModel:
 
         assert(len(taskLocations)>0) #ensure task location creation sanity
 
-        if (DEBUG):
-            print "Task locations",taskLocations
+        #if (DEBUG):
+        #    print "Task locations",taskLocations
 
         # maplocations
         #  
@@ -66,7 +66,7 @@ class TeamTaskModel:
         #calculate expected success rate for all pts in space
     
         for j,(x,M,w) in enumerate(self.paramSpace):
-            print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
+            #print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
             for i,team in enumerate(teams):
                 # mapping team into latent space
                 latentImage = np.dot(team,M)
@@ -102,41 +102,46 @@ class TeamTaskModel:
         self.trueModelSpecs["map"] = self.mapLocations[i]
 
 
+    
+    """
+    Calculate true parameter for each team, then generate samples for associated RV
+    """
     def generateAllArmRewards(self,horizon):
-        #setup arm rewards
-        if (self.rewardRVs == []):
-            for team in self.teamSkills:
-                # mapping team into latent space
-                latentImage = np.dot(team,self.trueModelSpecs["map"])
+        self.successMeans = []
 
-                #find boundaries of box
-                lowerBoxBounds = np.min(latentImage,0)
-                upperBoxBounds = np.max(latentImage,0)
-                
-                print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
+        for team in self.teamSkills:
+            # mapping team into latent space
+            latentImage = np.dot(team,self.trueModelSpecs["map"])
 
-                successRate = 1.0
-                for d in range(self.latentDim):
-                    delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
-                    if (delta < 0.0):
-                        successRate = 0
-                        break
-                    else:
-                        #multiply success rate by fractional overlap in dimension d
-                        successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
+            #find boundaries of box
+            lowerBoxBounds = np.min(latentImage,0)
+            upperBoxBounds = np.max(latentImage,0)
+            
+            print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
 
-                self.successMeans.append(successRate)
-                s = np.random.binomial(1,successRate,size=(horizon))
-                self.rewardRVs.append(s)
-            if (DEBUG):
-                print "Success means : ", self.successMeans
+            successRate = 1.0
+            for d in range(self.latentDim):
+                delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
+                if (delta < 0.0):
+                    successRate = 0
+                    break
+                else:
+                    #multiply success rate by fractional overlap in dimension d
+                    successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
+
+            self.successMeans.append(successRate)
+            s = np.random.binomial(1,successRate,size=(horizon))
+            self.rewardRVs.append(s)
+        return self.rewardRVs
+        if (DEBUG):
+            print "Success means : ", self.successMeans
 
     #model is eleemnt of paramspace (task,map,weight)
     def getOptArm(self,model):
         task = model[0]
         mapping = model[1]
 
-        successMeans = []
+        marginalSuccessMeans = []
         for team in self.teamSkills:
             latentImage = np.dot(team,mapping)
 
@@ -157,9 +162,9 @@ class TeamTaskModel:
                     #multiply success rate by fractional overlap in dimension d
                     successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
 
-            self.successMeans.append(successRate)
+            marginalSuccessMeans.append(successRate)
 
-        chosenArm = np.argmin(successMeans)
+        chosenArm = np.argmax(marginalSuccessMeans)
         if (DEBUG):
             print "Optimal arm for sampled model is",chosenArm
 
