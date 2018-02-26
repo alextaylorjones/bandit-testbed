@@ -1,10 +1,13 @@
 import math
 import numpy as np
 
-DEBUG = False
+DEBUG = True
 
 class TeamTaskModel:
 
+    successMeans = []
+    rewardRVs = []
+    latentDim = None
     teamSkills = []
     taskLocations = []
     mapLocations = []
@@ -14,19 +17,19 @@ class TeamTaskModel:
 
     def __init__(self, LATENT_DIM, SKILL_DIM, NUM_MAPS, RES,NUM_ARMS):
 
+        self.latentDim = LATENT_DIM
         #note: hardcoded
         taskLocations = []
         if (LATENT_DIM == 2):
             for x in range(0,int(math.floor(2.0/RES))):
                 for y in range(0,int(math.floor(2.0/RES))):
                     taskLocations.append((RES*x-1.0,RES*y-1.0))
-                    
+
         assert(len(taskLocations)>0) #ensure task location creation sanity
 
         if (DEBUG):
             print "Task locations",taskLocations
 
-        
         # maplocations
         #  
         mapLocations = []
@@ -62,17 +65,43 @@ class TeamTaskModel:
     #TODO: add capability of non-random selection
     def selectTrueModel(self):
         #TODO: select randomly
-        i = np.random.randint(low=0,high=len(taskLocations))
-        self.trueModelSpecs["task"] = taskLocations[i]
+        i = np.random.randint(low=0,high=len(self.taskLocations))
+        self.trueModelSpecs["task"] = self.taskLocations[i]
 
-        i = np.random.randint(low=0,high=len(mapLocations))
-        self.trueModelSpecs["map"] = mapLocations[i]
+        i = np.random.randint(low=0,high=len(self.mapLocations))
+        self.trueModelSpecs["map"] = self.mapLocations[i]
 
 
-    def generateAllArmRewards(self):
+    def generateAllArmRewards(self,horizon):
         #setup arm rewards
-        if (rewardRVs == None):
-        
+        if (self.rewardRVs == []):
+            for team in self.teamSkills:
+                # mapping team into latent space
+                latentImage = np.dot(team,self.trueModelSpecs["map"])
+
+                #find boundaries of box
+                lowerBoxBounds = np.min(latentImage,0)
+                upperBoxBounds = np.max(latentImage,0)
+                
+                print "For this team, bounds are :",lowerBoxBounds,upperBoxBounds
+
+                successRate = 1.0
+                for d in range(self.latentDim):
+                    delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
+                    if (delta < 0.0):
+                        successRate = 0
+                        break
+                    else:
+                        #multiply success rate by fractional overlap in dimension d
+                        successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
+
+                self.successMeans.append(successRate)
+                s = np.random.binomial(1,successRate,size=(horizon))
+                self.rewardRVs.append(s)
+            if (DEBUG):
+                print "Success means : ", self.successMeans
+
+
 class NaiveArmModel:
 
     armParams = {}

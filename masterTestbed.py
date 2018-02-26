@@ -1,7 +1,8 @@
-import banditPlayers
+from banditPlayers import BanditPlayer
 from armModel import TeamTaskModel, NaiveArmModel
 import numpy as np
 
+DEBUG = True
 
 if __name__ == "__main__":
     print "Running master testbed for bandits"
@@ -41,19 +42,20 @@ if __name__ == "__main__":
 
         #TODO: generate arm parameters, i.e. team members' skill vectors
         teams = []
-        if (ARM_SCHEME = "random"):
+        if (ARM_SCHEME == "random"):
             for _ in range(numArms):
-                team = np.random.unif(low=-1.0,high=1.0,size=(teamSize,skillDim))
-                team.append(team)
+                team = np.random.uniform(low=-1.0,high=1.0,size=(teamSize,skillDim))
+                teams.append(team)
 
+            #Add skill matrices for teams
             ttm.addTeamSkills(teams)
+
+            #note: currently random choice over all potential models
+            ttm.selectTrueModel()
 
         else:
             print "No arm scheme by name",
             print ARM_SCHEME
-            
-
-        #?
 
         for a in algorithms:
             if (DEBUG):
@@ -62,11 +64,11 @@ if __name__ == "__main__":
             #model aware thompson sampling
             if (a == "MA-TS"):
                 bp[a] = BanditPlayer(a)
-                bp.initMATS(ttm)
+                bp[a].initMATS(ttm)
             #naive (model-free) thompson sampling
             elif (a == "naive-TS"):
                 bp[a] = BanditPlayer(a)
-                bp.initNaiveTS(nam)
+                bp[a].initNaiveTS(nam)
             else:
                 print "Algorithm type ", a, " does not exist"
 
@@ -75,7 +77,7 @@ if __name__ == "__main__":
             print "(trial ",cur_trial,": time ",t,")"
 
             #use the true model to generate random rewards (may or may not be observed)
-            rewards = ttm.generateAllArmRewards()
+            rewards = ttm.generateAllArmRewards(horizon)
 
             for a in algorithms:
                 chosenArm = (bp[a]).chooseNextArm()
