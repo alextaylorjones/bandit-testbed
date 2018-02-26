@@ -1,5 +1,6 @@
 from banditPlayers import BanditPlayer
 from armModel import TeamTaskModel, NaiveArmModel
+from resultsTracker import plotRegret
 import numpy as np
 
 DEBUG = True
@@ -8,7 +9,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(100)
+    np.random.seed(40)
     
     ARM_SCHEME = "random"
     #alg list
@@ -24,10 +25,10 @@ if __name__ == "__main__":
     ntsResolution = 0.01
 
     #general parameters
-    trials = 10
+    trials = 100
     horizon = 100
     numArms = 5
-    teamSize = 5
+    teamSize = 3
 
     """
     Team Task Model - create once
@@ -38,7 +39,13 @@ if __name__ == "__main__":
 
     bp = {}
 
+    #one result list for each algorithm
+    results = [[] for _ in algorithms]
+
     for cur_trial in range(trials):
+
+        for i in range(len(algorithms)):
+            results[i].append([])
 
         #TODO: generate arm parameters, i.e. team members' skill vectors
         teams = []
@@ -78,19 +85,26 @@ if __name__ == "__main__":
                 print "Algorithm type ", a, " does not exist"
 
         armSelection = []
+        #use the true model to generate random rewards (may or may not be observed)
+        rewards = ttm.generateAllArmRewards(horizon)
+
         for t in range(horizon):
             print "(trial ",cur_trial,": time ",t,")"
 
-            #use the true model to generate random rewards (may or may not be observed)
-            rewards = ttm.generateAllArmRewards(horizon)
-
-            for a in algorithms:
+            for i,a in enumerate(algorithms):
                 chosenArm = (bp[a]).chooseNextArm(t)
                 if (DEBUG):
                     print "Choosing arm ",chosenArm," for alg ",a
 
                 (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
-
+                
+                #take the results for arm a, taking the latest trial list
+                results[i][-1].append((chosenArm,rewards[chosenArm][t]))
 
 
     print "Finished master testbed"
+    print "Raw Results:",results
+    plotRegret(results,algorithms)
+
+
+

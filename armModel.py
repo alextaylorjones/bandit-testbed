@@ -109,7 +109,7 @@ class TeamTaskModel:
     def generateAllArmRewards(self,horizon):
         self.successMeans = []
 
-        for team in self.teamSkills:
+        for i,team in enumerate(self.teamSkills):
             # mapping team into latent space
             latentImage = np.dot(team,self.trueModelSpecs["map"])
 
@@ -117,7 +117,7 @@ class TeamTaskModel:
             lowerBoxBounds = np.min(latentImage,0)
             upperBoxBounds = np.max(latentImage,0)
             
-            print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
+            print "For team ",i,", true bounds are :",lowerBoxBounds,upperBoxBounds
 
             successRate = 1.0
             for d in range(self.latentDim):
@@ -132,9 +132,9 @@ class TeamTaskModel:
             self.successMeans.append(successRate)
             s = np.random.binomial(1,successRate,size=(horizon))
             self.rewardRVs.append(s)
-        return self.rewardRVs
         if (DEBUG):
-            print "Success means : ", self.successMeans
+            print "True Success means : ", self.successMeans
+        return self.rewardRVs
 
     #model is eleemnt of paramspace (task,map,weight)
     def getOptArm(self,model):
@@ -149,8 +149,8 @@ class TeamTaskModel:
             lowerBoxBounds = np.min(latentImage,0)
             upperBoxBounds = np.max(latentImage,0)
             
-            if (DEBUG):
-                print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
+            #if (DEBUG):
+                #print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
 
             successRate = 1.0
             for d in range(self.latentDim):
@@ -166,7 +166,7 @@ class TeamTaskModel:
 
         chosenArm = np.argmax(marginalSuccessMeans)
         if (DEBUG):
-            print "Optimal arm for sampled model is",chosenArm
+            print "Optimal arm for sampled team-task model is",chosenArm
 
         return chosenArm
 
