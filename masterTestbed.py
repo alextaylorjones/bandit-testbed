@@ -13,7 +13,7 @@ if __name__ == "__main__":
     
     ARM_SCHEME = "random"
     #alg list
-    algorithms = ["MA-TS","UCB1","naive-TS"]
+    algorithms = ["naive-TS"]#"MA-TS"]#,"UCB1","naive-TS"]
 
     #params for MA-TS
     latentDim = 2
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     ntsResolution = 0.01
 
     #general parameters
-    trials = 100
+    trials = 5
     horizon = 100
     numArms = 5
     teamSize = 3

@@ -3,6 +3,7 @@ import math
 """
 This class holds all bandit policies and is accessed to make arm selection decisions
 """
+DEBUG = True
 class BanditPlayer:
 
     name = "NONAME"
@@ -74,13 +75,19 @@ class BanditPlayer:
                     if (total_weight >= s):
                         sampled_param = p
                         break
-                assert(sampled_param != None)
+
+                if (sampled_param == None):
+                    print "Fatal error: didnt choose a param in naive-TS"
+                    print "rand val = ",s, " - total weight = ",total_weight
+                    exit()
                 #just append param value to list
                 sampledParams.append(sampled_param[1])
                  
 
             #ensure we made a selection
             assert(sampledParams != [])
+            if (DEBUG):
+                print "naive-TS params are :",sampledParams
             #and choose arm with highest param, aka highest mean
             return np.argmax(sampledParams)
 
@@ -127,14 +134,31 @@ class BanditPlayer:
                 assert(False)
 
         elif (self.name == "naive-TS"):
+            print "Before update: ",self.armModel.getParamSpace(armIndex)
+
+            totalWeight = 0.0
+            #list of (param, weight) values
+            paramList = self.armModel.getParamSpace(armIndex)
+
+            #update weight
             if (rewardValue == 0):
-                for a in self.armModel.getArms():
-                    for p,w in self.armModel.getParamSpace(a):
-                        w = w * (1-p)
+                for i in range(len(paramList)):
+                    paramList[i][1] = paramList[i][1] * (1-paramList[i][0])
+                    totalWeight = totalWeight + paramList[i][1]
             elif (rewardValue == 1):
-               for a in self.armModel.getArms():
-                    for p,w in self.armModel.getParamSpace(a):
-                        w = w * p
+                for i in range(len(paramList)):
+                    paramList[i][1] = paramList[i][1] * (paramList[i][0])
+                    totalWeight = totalWeight + paramList[i][1]
+            else:
+                print "Thought we were using BRVs"
+                assert(0)
+
+
+            #normalize to prob distribution
+            for i in range(len(paramList)):
+                paramList[i][1] = paramList[i][1]/ totalWeight
+
+            print "After update: ",self.armModel.getParamSpace(armIndex)
         else:
             print "ERROR: No policy with name ", self.name
 
