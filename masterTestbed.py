@@ -9,26 +9,26 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(40)
+    np.random.seed(16)
     
     ARM_SCHEME = "random"
     #alg list
-    algorithms = ["naive-TS"]#"MA-TS"]#,"UCB1","naive-TS"]
+    algorithms = ["naive-TS","MA-TS","UCB1"]
 
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 10
+    numMaps = 40
     ttmResolution = 0.1
 
     #params for naive-TS
-    ntsResolution = 0.01
+    ntsResolution = 0.05
 
     #general parameters
-    trials = 5
-    horizon = 100
-    numArms = 5
-    teamSize = 3
+    trials = 3
+    horizon = 200
+    numArms = 10
+    teamSize = 2
 
     """
     Team Task Model - create once
@@ -42,29 +42,32 @@ if __name__ == "__main__":
     #one result list for each algorithm
     results = [[] for _ in algorithms]
 
-    for cur_trial in range(trials):
+    #done once for all trials
+    #select team locations, task and mapping 
+    teams = []
+    if (ARM_SCHEME == "random"):
+        for _ in range(numArms):
+            team = np.random.uniform(low=-1.0,high=1.0,size=(teamSize,skillDim))
+            teams.append(team)
 
+        #Add skill matrices for teams
+        ttm.addTeamSkills(teams)
+
+        #note: currently random choice over all potential models
+        ttm.selectTrueModel()
+
+    else:
+        print "No arm scheme by name",
+        print ARM_SCHEME
+        assert(False)
+
+ 
+    for cur_trial in range(trials):
+              
         for i in range(len(algorithms)):
             results[i].append([])
 
         #TODO: generate arm parameters, i.e. team members' skill vectors
-        teams = []
-        if (ARM_SCHEME == "random"):
-            for _ in range(numArms):
-                team = np.random.uniform(low=-1.0,high=1.0,size=(teamSize,skillDim))
-                teams.append(team)
-
-            #Add skill matrices for teams
-            ttm.addTeamSkills(teams)
-
-            #note: currently random choice over all potential models
-            ttm.selectTrueModel()
-
-        else:
-            print "No arm scheme by name",
-            print ARM_SCHEME
-            assert(False)
-
         for a in algorithms:
             if (DEBUG):
                 print "(trial ",cur_trial,": time 0) - initialize algorithm ",a
@@ -73,10 +76,12 @@ if __name__ == "__main__":
             if (a == "MA-TS"):
                 bp[a] = BanditPlayer(a)
                 bp[a].initMATS(ttm)
+                ttm.reset() # reset param weights
             #naive (model-free) thompson sampling
             elif (a == "naive-TS"):
                 bp[a] = BanditPlayer(a)
                 bp[a].initNaiveTS(nam)
+                nam.reset() #reset param weights
             elif (a == "UCB1"):
                 # do nothing
                 bp[a] = BanditPlayer(a)
@@ -102,9 +107,11 @@ if __name__ == "__main__":
                 results[i][-1].append((chosenArm,rewards[chosenArm][t]))
 
 
+    optAvg = max(ttm.successMeans)
+    print "Optimal Arm mean was ",optAvg
     print "Finished master testbed"
-    print "Raw Results:",results
-    plotRegret(results,algorithms)
+    #print "Raw Results:",results
+    plotRegret(results,algorithms,optAvg)
 
 
 

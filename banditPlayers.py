@@ -4,6 +4,7 @@ import math
 This class holds all bandit policies and is accessed to make arm selection decisions
 """
 DEBUG = True
+
 class BanditPlayer:
 
     name = "NONAME"
@@ -34,7 +35,7 @@ class BanditPlayer:
 
 
     def initUCB1(self,numArms):
-
+        self.armStatsUCB = []
         #no arm model class
         for i in range(numArms):
             #(Num Plays, Empirical Mean)
@@ -62,8 +63,11 @@ class BanditPlayer:
 
         elif (self.name == "naive-TS"):
             
-            sampledParams = []
+            sampledParams = np.zeros(len(self.armModel.getArms()))
+
             for a in self.armModel.getArms():
+                #if (DEBUG):
+                    #print "Param Space Arm ",a,", = ",self.armModel.getParamSpace(a)
                 s = np.random.uniform()
                 total_weight = 0
 
@@ -81,15 +85,20 @@ class BanditPlayer:
                     print "rand val = ",s, " - total weight = ",total_weight
                     exit()
                 #just append param value to list
-                sampledParams.append(sampled_param[1])
+                sampledParams[a] = sampled_param[0]
                  
 
             #ensure we made a selection
             assert(sampledParams != [])
             if (DEBUG):
                 print "naive-TS params are :",sampledParams
-            #and choose arm with highest param, aka highest mean
-            return np.argmax(sampledParams)
+
+            #randomly choose an arm with highest param, aka highest mean
+            firstMaxIndex = np.argmax(sampledParams)
+            allIndices = (np.where(sampledParams == sampledParams[firstMaxIndex]))[0]
+            assert(len(allIndices) > 0)
+            randMaxIndex = np.random.randint(0,high=len(allIndices))
+            return allIndices[randMaxIndex]
 
         elif (self.name == "UCB1"):
             confidence = []
@@ -122,19 +131,27 @@ class BanditPlayer:
             self.armStatsUCB[armIndex][1] = newReward / self.armStatsUCB[armIndex][0]
         elif (self.name == "MA-TS"):
             expSuccessRates = self.armModel.getSuccessRateDict()
-
+            paramList = self.armModel.getParamSpace()
+            totalWeight = 0.0
             if (rewardValue == 0):
-                for j,(x,M,w) in enumerate(self.armModel.getParamSpace()):
-                    w = w * (1- expSuccessRates[(armIndex,j)])
+                for j,(x,M,w) in enumerate(paramList):
+                    paramList[j][2] = paramList[j][2] * (1- expSuccessRates[(armIndex,j)])
+                    totalWeight = totalWeight + paramList[j][2]
             elif (rewardValue == 1):
                 for j,(x,M,w) in enumerate(self.armModel.getParamSpace()):
-                    w = w * expSuccessRates[(armIndex,j)]
+                    paramList[j][2] = paramList[j][2]* expSuccessRates[(armIndex,j)]
+                    totalWeight = totalWeight + paramList[j][2]
             else:
                 print "Thought these were bernoulli rvs?"
                 assert(False)
+            
+            #normalize to prob distribution
+            for j,(x,M,w) in enumerate(paramList):
+                paramList[j][2] =  paramList[j][2] /totalWeight
+
+
 
         elif (self.name == "naive-TS"):
-            print "Before update: ",self.armModel.getParamSpace(armIndex)
 
             totalWeight = 0.0
             #list of (param, weight) values
@@ -156,9 +173,9 @@ class BanditPlayer:
 
             #normalize to prob distribution
             for i in range(len(paramList)):
-                paramList[i][1] = paramList[i][1]/ totalWeight
+                paramList[i][1] = paramList[i][1]/totalWeight
 
-            print "After update: ",self.armModel.getParamSpace(armIndex)
         else:
             print "ERROR: No policy with name ", self.name
+            assert(0)
 

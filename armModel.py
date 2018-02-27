@@ -58,7 +58,16 @@ class TeamTaskModel:
         self.taskLocations = taskLocations
         self.mapLocations = mapLocations
         self.paramSpace = paramSpace
-        
+
+    
+    def reset(self):
+        #reset weights to uniform weights
+        unifValue = float(1.0/len(self.paramSpace))
+        for i in range(len(self.paramSpace)):
+            self.paramSpace[i][2] = unifValue
+
+        print "Resetting param values in team task model"
+
     def addTeamSkills(self,teams):
         #team is a (skill_dim,team_size) matrix
         self.teamSkills = teams
@@ -179,16 +188,18 @@ class NaiveArmModel:
 
     armParams = {}
     numArms = None
+    resolution = -1
     def __init__(self,resolution,numArms):
 
         assert( 0 <= resolution and 1 >= resolution)
         self.numArms = numArms
+        self.resolution = resolution
 
         # each arms has list of potential parameters of arm observation/reward distributions 
         for a in range(numArms):
-            vals = np.arange(0,1+resolution,resolution)
-            params = [float(1.0/len(vals))]*len(vals)
-            self.armParams[a] = [list(x) for x in zip(vals,params)]
+            params = np.arange(0,1+resolution,resolution)
+            weights = [float(1.0/len(params))]*len(params)
+            self.armParams[a] = [list(x) for x in zip(params,weights)]
 
     #gets a list of arm names (for now, ints)
     def getArms(self):
@@ -199,6 +210,13 @@ class NaiveArmModel:
         return self.armParams[armIndex]
 
 
+    #call initializer again
+    def reset(self):
+        for a in range(self.numArms):
+            unifVal = float(1.0/len(self.armParams[a]))
+            self.armParams[a] = [[entry[0],unifVal] for entry in self.armParams[a]]
+
+        print "Resetting param values in naive arm model"
 
 
 
