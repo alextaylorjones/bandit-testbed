@@ -128,7 +128,7 @@ class BanditPlayer:
             #inc arm play count
             self.armStatsUCB[armIndex][0] = self.armStatsUCB[armIndex][0] + 1
             #update empirical mean
-            self.armStatsUCB[armIndex][1] = newReward / self.armStatsUCB[armIndex][0]
+            self.armStatsUCB[armIndex][1] = float(newReward )/ self.armStatsUCB[armIndex][0]
         elif (self.name == "MA-TS"):
             expSuccessRates = self.armModel.getSuccessRateDict()
             paramList = self.armModel.getParamSpace()

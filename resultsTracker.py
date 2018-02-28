@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 DEBUG = False
-def plotRegret(rawResults,labels,optMean,optIndex):
+def plotRegret(armMeans,rawResults,paramText,labels,optMean,optIndex):
 
     plt.figure(1)
 
@@ -30,6 +30,7 @@ def plotRegret(rawResults,labels,optMean,optIndex):
         plt.plot(range(len(cum_reward)),opt_reward - cum_reward,label=labels[algIndex])
 
     plt.title("Empirical Expected Regret")
+    plt.figtext(0.99,0.01,paramText,horizontalalignment = 'right')
     plt.legend()
 
 
@@ -65,6 +66,7 @@ def plotRegret(rawResults,labels,optMean,optIndex):
     Show all plots
     """
     plt.legend()
-    plt.show()
+    plt.figtext(0.99,0.01,paramText,horizontalalignment = 'right')
+    #plt.show()
 
 

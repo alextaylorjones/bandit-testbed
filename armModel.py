@@ -8,6 +8,7 @@ class TeamTaskModel:
     successMeans = []
     rewardRVs = []
     latentDim = None
+    skillDim = None
     teamSkills = []
     taskLocations = []
     mapLocations = []
@@ -19,6 +20,7 @@ class TeamTaskModel:
     def __init__(self, LATENT_DIM, SKILL_DIM, NUM_MAPS, RES,NUM_ARMS):
 
         self.latentDim = LATENT_DIM
+        self.skillDim = SKILL_DIM
         #note: hardcoded
         taskLocations = []
         if (LATENT_DIM == 2):
@@ -74,6 +76,8 @@ class TeamTaskModel:
 
         #calculate expected success rate for all pts in space
     
+        if (DEBUG):
+            print "Begining calculation of all success rates ....",
         for j,(x,M,w) in enumerate(self.paramSpace):
             #print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
             for i,team in enumerate(teams):
@@ -97,19 +101,30 @@ class TeamTaskModel:
                         successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
 
                 self.expSuccessRates[(i,j)] = successRate
+        if (DEBUG):
+            print "Successfully calculate all success rates"
 
     def getSuccessRateDict(self):
         return self.expSuccessRates
 
     #TODO: add capability of non-random selection
-    def selectTrueModel(self):
+    def selectTrueModel(self,exclude=False):
         #TODO: select randomly
-        i = np.random.randint(low=0,high=len(self.taskLocations))
-        self.trueModelSpecs["task"] = self.taskLocations[i]
+        if (exclude == False):
+            i = np.random.randint(low=0,high=len(self.taskLocations))
+            self.trueModelSpecs["task"] = self.taskLocations[i]
 
-        i = np.random.randint(low=0,high=len(self.mapLocations))
-        self.trueModelSpecs["map"] = self.mapLocations[i]
+            i = np.random.randint(low=0,high=len(self.mapLocations))
+            self.trueModelSpecs["map"] = self.mapLocations[i]
+        else:
+            #generate map outside params 
+            A = np.random.normal(size=(self.skillDim,self.latentDim))
+            Q,R = np.linalg.qr(A)
+            self.trueModelSpecs["map"] = Q
 
+            #generate task randomly
+            i = np.random.randint(low=0,high=len(self.taskLocations))
+            self.trueModelSpecs["task"] = self.taskLocations[i]
 
     
     """
@@ -144,7 +159,7 @@ class TeamTaskModel:
             self.rewardRVs.append(s)
         if (DEBUG):
             print "True Success means : ", self.successMeans
-        return self.rewardRVs
+        return self.rewardRVs,self.successMeans
 
     #model is eleemnt of paramspace (task,map,weight)
     def getOptArm(self,model):
