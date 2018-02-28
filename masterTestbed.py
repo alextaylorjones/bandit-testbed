@@ -9,7 +9,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(16)
+    np.random.seed(69)
     
     ARM_SCHEME = "random"
     #alg list
@@ -17,8 +17,8 @@ if __name__ == "__main__":
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 4
-    numMaps = 40
+    skillDim = 5
+    numMaps = 100
     ttmResolution = 0.1
 
     #params for naive-TS
@@ -26,13 +26,24 @@ if __name__ == "__main__":
 
     #general parameters
     trials = 3
-    horizon = 200
-    numArms = 10
-    teamSize = 2
+    horizon = 500
+    numArms = 25
+    teamSize = 5
 
+    """
+    Fill param dictionary with all params
+    """
+
+    paramDict["arm scheme"] = ARM_SCHEME
+    paramDict["latent dimension"] = latentDim
+    paramDict["skill dimension"] = skillDim
+
+
+def runMasterTest(paramDict):
     """
     Team Task Model - create once
     contains all potential parameterizations of the team task model
+
     """
     ttm = TeamTaskModel(latentDim, skillDim, numMaps,ttmResolution, numArms)
     nam = NaiveArmModel(ntsResolution, numArms)
@@ -96,6 +107,8 @@ if __name__ == "__main__":
         for t in range(horizon):
             print "(trial ",cur_trial,": time ",t,")"
 
+            
+
             for i,a in enumerate(algorithms):
                 chosenArm = (bp[a]).chooseNextArm(t)
                 if (DEBUG):
@@ -103,15 +116,19 @@ if __name__ == "__main__":
 
                 (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
                 
+                """ Calculate the weight of decision region of optimal """
                 #take the results for arm a, taking the latest trial list
                 results[i][-1].append((chosenArm,rewards[chosenArm][t]))
 
 
     optAvg = max(ttm.successMeans)
+    optIndex = np.argmax(ttm.successMeans)
+
     print "Optimal Arm mean was ",optAvg
     print "Finished master testbed"
+    s=np.random.randint(0,10000)
     #print "Raw Results:",results
-    plotRegret(results,algorithms,optAvg)
+    plotRegret(results,algorithms,optAvg,optIndex)
 
 
 

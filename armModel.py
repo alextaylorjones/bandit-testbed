@@ -117,6 +117,7 @@ class TeamTaskModel:
     """
     def generateAllArmRewards(self,horizon):
         self.successMeans = []
+        self.rewardRVs = []
 
         for i,team in enumerate(self.teamSkills):
             # mapping team into latent space
