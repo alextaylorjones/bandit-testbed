@@ -1,6 +1,6 @@
 from banditPlayers import BanditPlayer
 from armModel import TeamTaskModel, NaiveArmModel
-from resultsTracker import plotRegret
+from resultsTracker import plotRegret, plotTeamBoxes
 import numpy as np
 from threading  import Thread
 
@@ -17,7 +17,7 @@ class BanditSimulator(Thread):
     def __init__(self,paramDict):
         Thread.__init__(self)
         #make a copy
-        self.paramDict = dict(paramDict)
+        self.paramDict = paramDict.copy()
 
     def run(self):
         """Unpack params
@@ -158,18 +158,18 @@ if __name__ == "__main__":
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 5
-    numMaps = 100
-    ttmResolution = 0.1
+    skillDim = 2
+    numMaps = 50
+    ttmResolution = 0.25
 
     #params for naive-TS
-    ntsResolution = 0.05
+    ntsResolution = 0.1
 
     #general parameters
-    trials = 3
-    horizon = 300
-    numArms = 20
-    teamSize = 3
+    trials = 2
+    horizon = 100
+    numArms = 30
+    teamSize = 2
 
     """
     Fill param dictionary with all params
@@ -191,24 +191,30 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    paramDict["arm scheme"] = ("random-excluded",None)
-    paramDict["num maps"] = 50
+    #banditSims.append(BanditSimulator(paramDict))
+    #banditSims[-1].setName("thread 1")
+    #banditSims[-1].start()
+
+    #change params and run another
+    paramDict["num maps"] = 300
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
     banditSims[-1].start()
 
-    #change params and run another
-    paramDict["arm scheme"] = ("random-excluded",None)
-    paramDict["num maps"] = 300
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 2")
     banditSims[-1].start()
 
+
     
     for b in banditSims:
         b.join()
-        plotRegret(b.armMeans,b.results,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex)
-    plt.show()
+    for b in banditSims:
+        plotRegret(b.results,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
+
+        #if (b.paramDict["latent dimension"] == 2) :
+        #    plotTeamBoxes(b)
+
 
 
 

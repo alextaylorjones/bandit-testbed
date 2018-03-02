@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 DEBUG = False
-def plotRegret(armMeans,rawResults,paramText,labels,optMean,optIndex):
+
+def plotRegret(rawResults,paramText,labels,optMean,optIndex,armMeans):
 
     plt.figure(1)
 
@@ -30,7 +31,7 @@ def plotRegret(armMeans,rawResults,paramText,labels,optMean,optIndex):
         plt.plot(range(len(cum_reward)),opt_reward - cum_reward,label=labels[algIndex])
 
     plt.title("Empirical Expected Regret")
-    plt.figtext(0.99,0.01,paramText,horizontalalignment = 'right')
+    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + paramText,horizontalalignment = 'right')
     plt.legend()
 
 
@@ -66,7 +67,8 @@ def plotRegret(armMeans,rawResults,paramText,labels,optMean,optIndex):
     Show all plots
     """
     plt.legend()
-    plt.figtext(0.99,0.01,paramText,horizontalalignment = 'right')
-    #plt.show()
+    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + paramText,horizontalalignment = 'right')
+    plt.show()
 
-
+def plotTeamBoxes(banditSimulation):
+    print "Plotting team boxes"
