@@ -10,9 +10,11 @@ class BanditPlayer:
     name = "NONAME"
     armStatsUCB = []
     armModel = None
+    numArms = None
 
-    def __init__(self,name):
+    def __init__(self,name,numArms):
         self.name = name
+        self.numArms = numArms
         if (name == "MA-TS"):
             print "",
         elif (name == "naive-TS"):
@@ -34,10 +36,11 @@ class BanditPlayer:
         self.armModel = naiveArmModel
 
 
-    def initUCB1(self,numArms):
+    def initUCB1(self):
         self.armStatsUCB = []
         #no arm model class
-        for i in range(numArms):
+        assert(self.numArms != None)
+        for i in range(self.numArms):
             #(Num Plays, Empirical Mean)
             self.armStatsUCB.append([0,0])
 
@@ -49,17 +52,17 @@ class BanditPlayer:
             total_weight = 0
             sampled_param = None
 
-            for p in self.armModel.getParamSpace():
+            for i,p in enumerate(self.armModel.getParamSpace()):
                 #params are (task,map,weight) lists
                 w = p[2]
                 total_weight = total_weight + w
                 if (total_weight >= s):
-                    sampled_param = p
+                    sampled_param = i
                     break
 
             #ensure we made a selection
             assert(sampled_param != None)
-            return self.armModel.getOptArm(sampled_param)
+            return self.armModel.optTeamParamMap[sampled_param]
 
         elif (self.name == "naive-TS"):
             
@@ -130,16 +133,18 @@ class BanditPlayer:
             #update empirical mean
             self.armStatsUCB[armIndex][1] = float(newReward )/ self.armStatsUCB[armIndex][0]
         elif (self.name == "MA-TS"):
-            expSuccessRates = self.armModel.getSuccessRateDict()
+            expSuccessRates = self.armModel.getSuccessRateTuple()
             paramList = self.armModel.getParamSpace()
             totalWeight = 0.0
             if (rewardValue == 0):
                 for j,(x,M,w) in enumerate(paramList):
-                    paramList[j][2] = paramList[j][2] * (1- expSuccessRates[(armIndex,j)])
+                    #recode team,param into expSuccessRate list index
+                    paramList[j][2] = paramList[j][2] * (1- expSuccessRates[j*self.numArms + armIndex])
                     totalWeight = totalWeight + paramList[j][2]
             elif (rewardValue == 1):
                 for j,(x,M,w) in enumerate(self.armModel.getParamSpace()):
-                    paramList[j][2] = paramList[j][2]* expSuccessRates[(armIndex,j)]
+                    #recode team,param into expSuccessRate list index
+                    paramList[j][2] = paramList[j][2]* expSuccessRates[j*self.numArms + armIndex]
                     totalWeight = totalWeight + paramList[j][2]
             else:
                 print "Thought these were bernoulli rvs?"

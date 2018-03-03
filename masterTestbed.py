@@ -29,18 +29,18 @@ class BanditSimulator(Thread):
         skillDim =  paramDict["skill dimension"] 
         skillDim =  paramDict["num maps"] 
         ttmResolution= paramDict["model task resolution"] 
+        rotResolution = paramDict["rotation resolution"]
         ntsResolution =  paramDict["naive param resolution"] 
         trials =  paramDict["trials"] 
         horizon =  paramDict["horizon"] 
         numArms =  paramDict["num arms"] 
         teamSize =  paramDict["team size"] 
 
-
         """
         Team Task Model - create once
         contains all potential parameterizations of the team task model
         """
-        ttm = TeamTaskModel(latentDim, skillDim, numMaps,ttmResolution, numArms)
+        ttm = TeamTaskModel(latentDim, skillDim, numMaps,ttmResolution, rotResolution,numArms)
         nam = NaiveArmModel(ntsResolution, numArms)
 
         bp = {}
@@ -72,8 +72,6 @@ class BanditSimulator(Thread):
 
             #note: currently random choice over all potential models
             ttm.selectTrueModel(exclude=True)
-
-
         else:
             print "No arm scheme by name",
             print armScheme
@@ -95,24 +93,28 @@ class BanditSimulator(Thread):
 
                 #model aware thompson sampling
                 if (a == "MA-TS"):
-                    bp[a] = BanditPlayer(a)
+                    bp[a] = BanditPlayer(a,numArms)
                     bp[a].initMATS(ttm)
                     ttm.reset() # reset param weights
                 #naive (model-free) thompson sampling
                 elif (a == "naive-TS"):
-                    bp[a] = BanditPlayer(a)
+                    bp[a] = BanditPlayer(a,numArms)
                     bp[a].initNaiveTS(nam)
                     nam.reset() #reset param weights
                 elif (a == "UCB1"):
                     # do nothing
-                    bp[a] = BanditPlayer(a)
-                    bp[a].initUCB1(numArms)
+                    bp[a] = BanditPlayer(a,numArms)
+                    bp[a].initUCB1()
                 else:
                     print "Algorithm type ", a, " does not exist"
 
             armSelection = []
             #use the true model to generate random rewards (may or may not be observed)
             rewards,armMeans = ttm.generateAllArmRewards(horizon)
+            
+            #sanity check for no arm fouling between trials
+            if (self.armMeans != None):
+                assert(armMeans == self.armMeans)
 
             #Save arm reward means
             if (self.armMeans == None):
@@ -144,13 +146,16 @@ class BanditSimulator(Thread):
         self.optAvg = optAvg
         self.optIndex = optIndex
 
+        if (DEBUG):
+            print "ARM MEANS: ",self.armMeans
+
 
 
 if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(70)
+    np.random.seed(71)
     
     armScheme = ("random",None)
     #alg list
@@ -158,18 +163,19 @@ if __name__ == "__main__":
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 2
-    numMaps = 50
-    ttmResolution = 0.25
+    skillDim = 3
+    numMaps = 75
+    ttmResolution = 0.1
+    rotResolution = math.PI/2.0
 
     #params for naive-TS
-    ntsResolution = 0.1
+    ntsResolution = 0.05
 
     #general parameters
-    trials = 2
+    trials = 1
     horizon = 100
-    numArms = 30
-    teamSize = 2
+    numArms = 20
+    teamSize = 3
 
     """
     Fill param dictionary with all params
@@ -181,6 +187,7 @@ if __name__ == "__main__":
     paramDict["skill dimension"] = skillDim
     paramDict["num maps"] = numMaps
     paramDict["model task resolution"] = ttmResolution
+    paramDict["rotation resolution"] = rotResolution
     paramDict["naive param resolution"] = ntsResolution
     paramDict["trials"] = trials
     paramDict["horizon"] = horizon
@@ -197,18 +204,15 @@ if __name__ == "__main__":
 
     #change params and run another
     paramDict["num maps"] = 300
+    paramDict["arm scheme"] = ("random-excluded",None)
+
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
     banditSims[-1].start()
-
-    banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 2")
-    banditSims[-1].start()
-
-
     
     for b in banditSims:
         b.join()
+
     for b in banditSims:
         plotRegret(b.results,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
 

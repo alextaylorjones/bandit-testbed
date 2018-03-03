@@ -11,22 +11,57 @@ class TeamTaskModel:
     skillDim = None
     teamSkills = []
     taskLocations = []
+    taskResolution = None
+    rotResolution = None
     mapLocations = []
     paramSpace = []
-    trueModelSpecs = {}
-    expSuccessRates = {}
+    trueModelSpecs =  {}
+    expSuccessRates = []
+    optTeamParamMap = []
     numArms = None
 
-    def __init__(self, LATENT_DIM, SKILL_DIM, NUM_MAPS, RES,NUM_ARMS):
+    def __init__(self, LATENT_DIM, SKILL_DIM, NUM_MAPS, PT_RES,ANGLE_RES,NUM_ARMS):
 
         self.latentDim = LATENT_DIM
         self.skillDim = SKILL_DIM
+        self.taskResolution = PT_RES
+        self.rotResoluton = ANGLE_RES
+
         #note: hardcoded
         taskLocations = []
         if (LATENT_DIM == 2):
             for x in range(0,int(math.floor(2.0/RES))):
                 for y in range(0,int(math.floor(2.0/RES))):
                     taskLocations.append((RES*x-1.0,RES*y-1.0))
+
+        #generate all unique rotations
+
+        # initial basis
+        gen = np.eye(skillDim,latentDim)
+
+        #Rot*gen = rotated matrix
+        #exp(r * u ^ v) gen ->
+
+        #make sure resolution is even
+        numRots = int(math.pi/ANGLE_RES)
+
+        #cannot have resolution more than 90 degrees
+        assert (numRots > 0)
+
+        totalRots = math.pow(numRots,self.latentDim - 1)
+
+        if (DEBUG):
+            print "Total number of rotations is ",totalRots
+            if (totalRots > 1000):
+                print "More than ten thousand rotations, may take a long time..."
+        rotList = [gen]
+
+        for index in range(int(totalRots)):
+            if (index % numRots == 0):
+                m = index / numRots
+                #STOPPED HERE
+
+
 
         assert(len(taskLocations)>0) #ensure task location creation sanity
 
@@ -80,6 +115,8 @@ class TeamTaskModel:
             print "Begining calculation of all success rates ....",
         for j,(x,M,w) in enumerate(self.paramSpace):
             #print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
+            optTeam = None
+            maxSuccessRate = -1
             for i,team in enumerate(teams):
                 # mapping team into latent space
                 latentImage = np.dot(team,M)
@@ -92,7 +129,8 @@ class TeamTaskModel:
 
                 successRate = 1.0
                 for d in range(self.latentDim):
-                    delta = upperBoxBounds[d] - x[d]
+                    #add extra term due to discrete space
+                    delta = upperBoxBounds[d] - x[d] + self.taskResolution
                     if (delta < 0.0):
                         successRate = 0
                         break
@@ -100,16 +138,29 @@ class TeamTaskModel:
                         #multiply success rate by fractional overlap in dimension d
                         successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
 
-                self.expSuccessRates[(i,j)] = successRate
+                if (maxSuccessRate < successRate):
+                    optTeam = i
+                    maxSuccessRate = successRate
+                self.expSuccessRates.append(successRate)
+
+            #sanity
+            assert(optTeam != None)
+
+            #save which team is optimal for parameter j
+            self.optTeamParamMap.append(optTeam)
+            
+                #old 
+                #self.expSuccessRates[(i,j)] = successRate
         if (DEBUG):
             print "Successfully calculate all success rates"
 
-    def getSuccessRateDict(self):
+    def getSuccessRateTuple(self):
         return self.expSuccessRates
 
     #TODO: add capability of non-random selection
     def selectTrueModel(self,exclude=False):
         #TODO: select randomly
+
         if (exclude == False):
             i = np.random.randint(low=0,high=len(self.taskLocations))
             self.trueModelSpecs["task"] = self.taskLocations[i]
@@ -146,7 +197,8 @@ class TeamTaskModel:
 
             successRate = 1.0
             for d in range(self.latentDim):
-                delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
+                # since we are in discrete space, count equal overlap as single segment
+                delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d] + self.taskResolution
                 if (delta < 0.0):
                     successRate = 0
                     break
@@ -162,7 +214,10 @@ class TeamTaskModel:
         return self.rewardRVs,self.successMeans
 
     #model is eleemnt of paramspace (task,map,weight)
+    """ #Do not perform recalculation
     def getOptArm(self,model):
+
+        
         task = model[0]
         mapping = model[1]
 
@@ -190,10 +245,13 @@ class TeamTaskModel:
             marginalSuccessMeans.append(successRate)
 
         chosenArm = np.argmax(marginalSuccessMeans)
+        chosenArm = self.optTeamParamMap[model]
+
         if (DEBUG):
             print "Optimal arm for sampled team-task model is",chosenArm
 
         return chosenArm
+    """
 
     def getParamSpace(self):
         return self.paramSpace
