@@ -3,6 +3,7 @@ from armModel import TeamTaskModel, NaiveArmModel
 from resultsTracker import plotRegret, plotTeamBoxes
 import numpy as np
 from threading  import Thread
+import math
 
 DEBUG = True
 
@@ -10,6 +11,7 @@ DEBUG = True
 class BanditSimulator(Thread):
     paramDict = {}
     results = None
+    decisionRegionTracker = None
     optAvg = None
     optIndex = None
     armMeans = None
@@ -47,6 +49,8 @@ class BanditSimulator(Thread):
 
         #one result list for each algorithm
         results = [[] for _ in algorithms]
+        #one model tracker list for each algorithm
+        tracker = [[] for _ in algorithms]
 
         #done once for all trials
         #select team locations, task and mapping 
@@ -85,6 +89,7 @@ class BanditSimulator(Thread):
 
             for i in range(len(algorithms)):
                 results[i].append([])
+                tracker[i].append([])
 
             #TODO: generate arm parameters, i.e. team members' skill vectors
             for a in algorithms:
@@ -131,8 +136,9 @@ class BanditSimulator(Thread):
                     chosenArm = (bp[a]).chooseNextArm(t)
                     if (DEBUG):
                         print "Choosing arm ",chosenArm," for alg ",a
-
-                    (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
+                    #update model and track arm model weight for this iteration
+                    track = (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
+                    tracker[i][-1].append(track) 
                     
                     """ Calculate the weight of decision region of optimal """
                     #take the results for arm a, taking the latest trial list
@@ -143,6 +149,7 @@ class BanditSimulator(Thread):
 
         #save results in class variables
         self.results = results
+        self.decisionRegionTracker = tracker
         self.optAvg = optAvg
         self.optIndex = optIndex
 
@@ -166,7 +173,7 @@ if __name__ == "__main__":
     skillDim = 3
     numMaps = 75
     ttmResolution = 0.1
-    rotResolution = math.PI/2.0
+    rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
     ntsResolution = 0.05
@@ -174,7 +181,7 @@ if __name__ == "__main__":
     #general parameters
     trials = 1
     horizon = 100
-    numArms = 20
+    numArms = 10
     teamSize = 3
 
     """
@@ -203,9 +210,7 @@ if __name__ == "__main__":
     #banditSims[-1].start()
 
     #change params and run another
-    paramDict["num maps"] = 300
-    paramDict["arm scheme"] = ("random-excluded",None)
-
+    paramDict["num maps"] = 100
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
     banditSims[-1].start()
@@ -214,7 +219,7 @@ if __name__ == "__main__":
         b.join()
 
     for b in banditSims:
-        plotRegret(b.results,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
+        plotRegret(b.results,b.decisionRegionTracker,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
 
         #if (b.paramDict["latent dimension"] == 2) :
         #    plotTeamBoxes(b)

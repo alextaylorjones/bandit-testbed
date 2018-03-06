@@ -150,9 +150,16 @@ class BanditPlayer:
                 print "Thought these were bernoulli rvs?"
                 assert(False)
             
+            track = [0.0 for _ in range(self.numArms)]
+
             #normalize to prob distribution
             for j,(x,M,w) in enumerate(paramList):
                 paramList[j][2] =  paramList[j][2] /totalWeight
+                
+                optTeam = self.armModel.optTeamParamMap[j]
+                #add model weight to tracker list
+                track[optTeam] = track[optTeam] + paramList[j][2]
+            return track
 
 
 
@@ -183,4 +190,6 @@ class BanditPlayer:
         else:
             print "ERROR: No policy with name ", self.name
             assert(0)
+        return []
+            
 

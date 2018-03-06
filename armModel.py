@@ -30,12 +30,13 @@ class TeamTaskModel:
         #note: hardcoded
         taskLocations = []
         if (LATENT_DIM == 2):
-            for x in range(0,int(math.floor(2.0/RES))):
-                for y in range(0,int(math.floor(2.0/RES))):
-                    taskLocations.append((RES*x-1.0,RES*y-1.0))
+            for x in range(0,int(math.floor(2.0/PT_RES))):
+                for y in range(0,int(math.floor(2.0/PT_RES))):
+                    taskLocations.append((PT_RES*x-1.0,PT_RES*y-1.0))
 
         #generate all unique rotations
 
+        """
         # initial basis
         gen = np.eye(skillDim,latentDim)
 
@@ -60,6 +61,7 @@ class TeamTaskModel:
             if (index % numRots == 0):
                 m = index / numRots
                 #STOPPED HERE
+        """
 
 
 
@@ -263,6 +265,7 @@ class NaiveArmModel:
     armParams = {}
     numArms = None
     resolution = -1
+    optTeamParamMap = []
     def __init__(self,resolution,numArms):
 
         assert( 0 <= resolution and 1 >= resolution)

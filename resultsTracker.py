@@ -3,7 +3,7 @@ import numpy as np
 
 DEBUG = False
 
-def plotRegret(rawResults,paramText,labels,optMean,optIndex,armMeans):
+def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optIndex,armMeans):
 
     plt.figure(1)
 
@@ -31,7 +31,7 @@ def plotRegret(rawResults,paramText,labels,optMean,optIndex,armMeans):
         plt.plot(range(len(cum_reward)),opt_reward - cum_reward,label=labels[algIndex])
 
     plt.title("Empirical Expected Regret")
-    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + paramText,horizontalalignment = 'right')
+    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + "\n"+paramText,horizontalalignment = 'right')
     plt.legend()
 
 
@@ -63,12 +63,47 @@ def plotRegret(rawResults,paramText,labels,optMean,optIndex,armMeans):
 
 
     
+    plt.legend()
+    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+    
+    """
+    Show decision region weight evolution
+    """
+    for algIndex,top_list in enumerate(decisionRegionTracker):
+        if (labels[algIndex] == "MA-TS"):
+            plt.figure(3+algIndex)
+            #create a list of numArms length
+            numArms= len(armMeans)
+            tracker = []
+            for _ in range(numArms):
+                tracker.append([])
+            #zip together all trials together
+            for i,trial in enumerate(top_list):
+                #each on of these are the results of one trial
+                for j in range(numArms):
+                    #horizon-length tracker list hasnt been created
+                    if (i == 0):
+                        #take jth element of list and make a horizon-length list of weights
+                        tracker[j] = np.array([e[j] for e in trial])
+                    else:
+                        tracker[j] = tracker[j] + np.array([e[j] for e in trial])
+            #plot each arm decision region weight over time
+            for j in range(numArms):
+                curLabel = labels[algIndex] + "-" + str(j)
+                plt.plot(range(len(tracker[j])),tracker[j],label=curLabel)
+
+            plt.title("Decision Region Post. Dist Mass")
+            plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+            plt.legend()
+
+
     """
     Show all plots
     """
-    plt.legend()
-    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + paramText,horizontalalignment = 'right')
     plt.show()
+
+
+
 
 def plotTeamBoxes(banditSimulation):
     print "Plotting team boxes"
