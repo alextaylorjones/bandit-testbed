@@ -58,15 +58,45 @@ class BanditSimulator(Thread):
         #select team locations, task and mapping 
         teams = []
         if (armScheme[0] == "random"):
-            for _ in range(numArms):
-                team = np.random.uniform(low=-1.0,high=1.0,size=(teamSize,skillDim))
-                teams.append(team)
+            if (armScheme[1] == None):
+                for _ in range(numArms):
+                    team = np.random.uniform(low=-1.0,high=1.0,size=(teamSize,skillDim))
+                    teams.append(team)
 
-            #Add skill matrices for teams
-            ttm.addTeamSkills(teams)
+                #Add skill matrices for teams
+                ttm.addTeamSkills(teams)
 
-            #note: currently random choice over all potential models
-            ttm.selectTrueModel()
+                #note: currently random choice over all potential models
+                ttm.selectTrueModel()
+            elif (armScheme[1] == "well-spaced"):
+                #select true model
+                ttm.selectTrueModel()
+
+
+                #randomly select teams until we fill each mean bucket
+                meanBuckets = [None for _ in range(numArms)]
+                filledBuckets = 0
+                width = 1.0/numArms
+                while (filledBuckets < len(meanBuckets)):
+                    #generate random team
+                    team = np.random.uniform(low=-1.0,high = 1.0,size=(teamSize,skillDim))
+
+                    #see if bucket is filled
+                    m = ttm.getTrueSuccessRate(team)
+                    bucketID = int(math.floor(m / width))-1
+                    if (meanBuckets[bucketID] == None):
+                        filledBuckets = filledBuckets + 1
+                        if (DEBUG):
+                            print "Filling ",filledBuckets, " out of ",len(meanBuckets), "buckets"
+                        #fill bucket if not team in bucket
+                        meanBuckets[bucketID] = team
+
+
+                ttm.addTeamSkills(meanBuckets)
+            else:
+                print "Incorrect subscheme for random",armScheme
+                assert(0)
+
 
         elif (armScheme[0] == "random-excluded"):
             for _ in range(numArms):
@@ -94,10 +124,10 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along 2nd dimension
-                    teamMat[0][1] = 2.0 * (i+1)
+                    teamMat[0][1] = 1.0 
 
                     for r in range(1,teamSize):
-                        teamMat[r][1] = 2.0 * (i+1) - 1.0
+                        teamMat[r][1] = 0.0
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(2,latentDim):
@@ -134,9 +164,9 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along skewer dimension
-                    teamMat[0][skewerDim] = 2.0 * (i+1)
+                    teamMat[0][skewerDim] = 1.0 
                     for r in range(1,teamSize):
-                        teamMat[r][skewerDim] = 2.0 * (i+1) - 1.0
+                        teamMat[r][skewerDim] = 0.0 
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(latentDim):
@@ -264,7 +294,7 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 3
-    numMaps = 300
+    numMaps = 100
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -272,9 +302,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 3
+    trials = 2
     horizon = 200
-    numArms = 15
+    numArms = 10
     teamSize = 3
 
     """
@@ -298,16 +328,23 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    paramDict["arm scheme"] = ("space-util-example","all-dim")
+    #paramDict["arm scheme"] = ("space-util-example","all-dim")
     #banditSims.append(BanditSimulator(paramDict))
     #banditSims[-1].setName("thread 1")
     #banditSims[-1].start()
 
     #change params and run another
-    paramDict["arm scheme"] = ("space-util-example","single-dim")
+    #paramDict["arm scheme"] = ("space-util-example","single-dim")
+    #banditSims.append(BanditSimulator(paramDict))
+    #banditSims[-1].setName("thread 2")
+    #banditSims[-1].start()
+
+    paramDict["arm scheme"] = ("random","well-spaced")
     banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 2")
+    banditSims[-1].setName("thread 1")
     banditSims[-1].start()
+
+
     
     for b in banditSims:
         b.join()

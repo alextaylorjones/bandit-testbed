@@ -76,7 +76,7 @@ class TeamTaskModel:
         #  
         mapLocations = []
         for x in range(NUM_MAPS):
-            A = np.random.normal(size=(SKILL_DIM,LATENT_DIM))
+            A = np.random.uniform(size=(SKILL_DIM,LATENT_DIM))
             Q,R = np.linalg.qr(A)
             mapLocations.append(Q)
 
@@ -197,7 +197,25 @@ class TeamTaskModel:
             return
 
 
-    
+    def getTrueSuccessRate(self,team):
+        assert("map" in self.trueModelSpecs.keys() and "task" in self.trueModelSpecs.keys())
+
+        latentImage = np.dot(team,self.trueModelSpecs["map"])
+        lowerBoxBounds = np.min(latentImage,0)
+        upperBoxBounds = np.max(latentImage,0)
+        successRate = 1.0
+        for d in range(self.latentDim):
+            # since we are in discrete space, count equal overlap as single segment
+            delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d] + self.taskResolution
+            if (delta < 0.0):
+                successRate = 0
+                break
+            else:
+                #multiply success rate by fractional overlap in dimension d
+                successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
+        return successRate
+
+
     """
     Calculate true parameter for each team, then generate samples for associated RV
     """

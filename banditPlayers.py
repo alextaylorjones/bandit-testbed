@@ -159,6 +159,8 @@ class BanditPlayer:
                 optTeam = self.armModel.optTeamParamMap[j]
                 #add model weight to tracker list
                 track[optTeam] = track[optTeam] + paramList[j][2]
+
+            print "Track = ",track
             return track
 
 
