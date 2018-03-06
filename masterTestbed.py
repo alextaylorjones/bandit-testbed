@@ -38,6 +38,8 @@ class BanditSimulator(Thread):
         numArms =  paramDict["num arms"] 
         teamSize =  paramDict["team size"] 
 
+        #printing options
+        np.set_printoptions(precision=3)
         """
         Team Task Model - create once
         contains all potential parameterizations of the team task model
@@ -92,10 +94,10 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along 2nd dimension
-                    teamMat[0][1] = 2.0 * i
+                    teamMat[0][1] = 2.0 * (i+1)
 
                     for r in range(1,teamSize):
-                        teamMat[r][1] = 2.0 * i - 1.0
+                        teamMat[r][1] = 2.0 * (i+1) - 1.0
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(2,latentDim):
@@ -112,12 +114,15 @@ class BanditSimulator(Thread):
                     #all remaining individuals have 0 skill
 
                     #save team
-                    team.append(teamMat)
+                    teams.append(teamMat)
+
+                    print "Team ",i," has matrix \n", teamMat
 
             #arrange teams along all dimensions
             elif (armScheme[1] == "all-dim"):
                 armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
                 heights = np.random.uniform(low=1.0,high=2.0,size=numArms)
+
                 for i in range(numArms):
                     #choose dimensions to skewer on
                     skewerDim = i % latentDim
@@ -129,9 +134,9 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along skewer dimension
-                    teamMat[0][skewerDim] = 2.0 * i
-                    for r in range(teamSize):
-                        teamMat[r][skewerDim] = 2.0 * i - 1.0
+                    teamMat[0][skewerDim] = 2.0 * (i+1)
+                    for r in range(1,teamSize):
+                        teamMat[r][skewerDim] = 2.0 * (i+1) - 1.0
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(latentDim):
@@ -151,12 +156,12 @@ class BanditSimulator(Thread):
 
                     #save team
                     teams.append(teamMat)
+                    print "Team ",i," has matrix\n", teamMat
 
             else:
                 print "Incorrect second argument to arm scheme ",armScheme 
                 assert(0)
-            print "\n\n **** All teams"
-            print teams
+
             #Add skill matrices for teams
             ttm.addTeamSkills(teams)
 
@@ -251,15 +256,15 @@ if __name__ == "__main__":
     #seed
     np.random.seed(78)
     
-    #armScheme = ("random",None)
-    armScheme = ("space-util-example","all-dim")
+    armScheme = ("random",None)
+    #armScheme = ("space-util-example","all-dim")
     #alg list
     algorithms = ["naive-TS","MA-TS","UCB1"]
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 4
-    numMaps = 30
+    skillDim = 3
+    numMaps = 300
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -267,9 +272,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 2
-    horizon = 100
-    numArms = 10
+    trials = 3
+    horizon = 200
+    numArms = 15
     teamSize = 3
 
     """
@@ -293,13 +298,13 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    armScheme = ("space-util-example","all-dim")
-    banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 1")
-    banditSims[-1].start()
+    paramDict["arm scheme"] = ("space-util-example","all-dim")
+    #banditSims.append(BanditSimulator(paramDict))
+    #banditSims[-1].setName("thread 1")
+    #banditSims[-1].start()
 
     #change params and run another
-    armScheme = ("space-util-example","single-dim")
+    paramDict["arm scheme"] = ("space-util-example","single-dim")
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 2")
     banditSims[-1].start()

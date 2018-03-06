@@ -34,6 +34,8 @@ class TeamTaskModel:
                 for y in range(0,int(math.floor(2.0/PT_RES))):
                     taskLocations.append((PT_RES*x-1.0,PT_RES*y-1.0))
 
+            taskLocations.append(np.zeros(LATENT_DIM))
+
         #generate all unique rotations
 
         """
@@ -78,6 +80,7 @@ class TeamTaskModel:
             Q,R = np.linalg.qr(A)
             mapLocations.append(Q)
 
+        mapLocations.append(np.eye(SKILL_DIM,LATENT_DIM))
 
 
         #Uniform prior
@@ -127,7 +130,7 @@ class TeamTaskModel:
                 lowerBoxBounds = np.min(latentImage,0)
                 upperBoxBounds = np.max(latentImage,0)
                 
-                #print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
+                #print "For team ",i," bounds are :",lowerBoxBounds,upperBoxBounds
 
                 successRate = 1.0
                 for d in range(self.latentDim):
@@ -210,7 +213,7 @@ class TeamTaskModel:
             lowerBoxBounds = np.min(latentImage,0)
             upperBoxBounds = np.max(latentImage,0)
             
-            print "For team ",i,", true bounds are :",lowerBoxBounds,upperBoxBounds
+            print "For team ",i,", true bounds (min,max) are :",lowerBoxBounds,upperBoxBounds
 
             successRate = 1.0
             for d in range(self.latentDim):
