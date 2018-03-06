@@ -76,6 +76,88 @@ class BanditSimulator(Thread):
 
             #note: currently random choice over all potential models
             ttm.selectTrueModel(exclude=True)
+        elif (armScheme[0] == "space-util-example"):
+            #let mapping be eye
+            assert(teamSize  > 1)
+
+            mapping = np.eye((skillDim,latentDim))
+            task = np.zeros(latentDim)
+
+
+            #arrange all teams along single dimension
+            if (armScheme[1] == "single-dim"):
+                armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
+                heights = np.random.uniform(low=ttmResolution,high=ttmResolution*5,size=numArms)
+                teams= []
+
+                for i in range(numArms):
+                    #init team matrix
+                    teamMat = np.zeros((teamSize,skillDim))
+
+                    #skewer along 2nd dimension
+                    teamMat[0][1] = 2.0 * i
+
+                    for r in range(1,teamSize):
+                        teamMat[r][1] = 2.0 * i - 1.0
+
+                    #give volume in all remaining dimensions, but all dominating task
+                    for d in range(2,latentDim):
+                        teamMat[0][d] = 0.0
+                        teamMat[1][d] = 1.0 
+
+                    #this much of the volume should extend above the dim 0 axis
+                    f = heights[i] * armMeans[i]
+
+                    #individual 1 has skill f
+                    teamMat[0][0] = f
+                    #individual 2 has skill f-height
+                    teamMat[1][0] = f - heights[i]
+                    #all remaining individuals have 0 skill
+
+                    #make each a random height, with center arranged so mean matches arm means
+                    team.append(teamMat)
+
+            #arrange teams along all dimensions
+            elif (armScheme[1] == "all-dim"):
+                armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
+                heights = np.random.uniform(low=ttmResolution,high=ttmResolution*5,size=numArms)
+                teams= []
+
+                for i in range(numArms):
+                    #choose dimensions to skewer on
+                    skewerDim = i % latentDim
+
+                    #STOPPED HERE 
+                    #init team matrix
+                    teamMat = np.zeros((teamSize,skillDim))
+
+                    #skewer along skewer dimension
+                    teamMat[0][1] = 2.0 * i
+
+                    for r in range(1,teamSize):
+                        teamMat[r][1] = 2.0 * i - 1.0
+
+                    #give volume in all remaining dimensions, but all dominating task
+                    for d in range(2,latentDim):
+                        teamMat[0][d] = 0.0
+                        teamMat[1][d] = 1.0 
+
+                    #this much of the volume should extend above the dim 0 axis
+                    f = heights[i] * armMeans[i]
+
+                    #individual 1 has skill f
+                    teamMat[0][0] = f
+                    #individual 2 has skill f-height
+                    teamMat[1][0] = f - heights[i]
+                    #all remaining individuals have 0 skill
+
+                    #make each a random height, with center arranged so mean matches arm means
+                    team.append(teamMat)
+
+
+
+
+
         else:
             print "No arm scheme by name",
             print armScheme
