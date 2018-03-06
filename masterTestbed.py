@@ -80,16 +80,13 @@ class BanditSimulator(Thread):
             #let mapping be eye
             assert(teamSize  > 1)
 
-            mapping = np.eye((skillDim,latentDim))
+            mapping = np.eye(skillDim,latentDim)
             task = np.zeros(latentDim)
-
-
+            teams= [] 
             #arrange all teams along single dimension
             if (armScheme[1] == "single-dim"):
                 armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
-                heights = np.random.uniform(low=ttmResolution,high=ttmResolution*5,size=numArms)
-                teams= []
-
+                heights = np.random.uniform(low=1.0,high=2.0,size=numArms)
                 for i in range(numArms):
                     #init team matrix
                     teamMat = np.zeros((teamSize,skillDim))
@@ -114,48 +111,56 @@ class BanditSimulator(Thread):
                     teamMat[1][0] = f - heights[i]
                     #all remaining individuals have 0 skill
 
-                    #make each a random height, with center arranged so mean matches arm means
+                    #save team
                     team.append(teamMat)
 
             #arrange teams along all dimensions
             elif (armScheme[1] == "all-dim"):
                 armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
-                heights = np.random.uniform(low=ttmResolution,high=ttmResolution*5,size=numArms)
-                teams= []
-
+                heights = np.random.uniform(low=1.0,high=2.0,size=numArms)
                 for i in range(numArms):
                     #choose dimensions to skewer on
                     skewerDim = i % latentDim
+                    #choose dimension to vary height upon
+                    varyDim = (skewerDim + 1 ) % latentDim
 
                     #STOPPED HERE 
                     #init team matrix
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along skewer dimension
-                    teamMat[0][1] = 2.0 * i
-
-                    for r in range(1,teamSize):
-                        teamMat[r][1] = 2.0 * i - 1.0
+                    teamMat[0][skewerDim] = 2.0 * i
+                    for r in range(teamSize):
+                        teamMat[r][skewerDim] = 2.0 * i - 1.0
 
                     #give volume in all remaining dimensions, but all dominating task
-                    for d in range(2,latentDim):
+                    for d in range(latentDim):
+                        if (d == skewerDim or d == varyDim):
+                            continue
                         teamMat[0][d] = 0.0
                         teamMat[1][d] = 1.0 
 
-                    #this much of the volume should extend above the dim 0 axis
+                    #this much of the volume should extend above the dim vary dimension axis
                     f = heights[i] * armMeans[i]
 
                     #individual 1 has skill f
-                    teamMat[0][0] = f
+                    teamMat[0][varyDim] = f
                     #individual 2 has skill f-height
-                    teamMat[1][0] = f - heights[i]
+                    teamMat[1][varyDim] = f - heights[i]
                     #all remaining individuals have 0 skill
 
-                    #make each a random height, with center arranged so mean matches arm means
-                    team.append(teamMat)
+                    #save team
+                    teams.append(teamMat)
 
+            else:
+                print "Incorrect second argument to arm scheme ",armScheme 
+                assert(0)
+            print "\n\n **** All teams"
+            print teams
+            #Add skill matrices for teams
+            ttm.addTeamSkills(teams)
 
-
+            ttm.selectTrueModel(mapping=mapping,task=task)
 
 
         else:
@@ -246,14 +251,15 @@ if __name__ == "__main__":
     #seed
     np.random.seed(78)
     
-    armScheme = ("random",None)
+    #armScheme = ("random",None)
+    armScheme = ("space-util-example","all-dim")
     #alg list
     algorithms = ["naive-TS","MA-TS","UCB1"]
 
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 150
+    numMaps = 30
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -261,9 +267,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 5
-    horizon = 400
-    numArms = 15
+    trials = 2
+    horizon = 100
+    numArms = 10
     teamSize = 3
 
     """
@@ -287,12 +293,13 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
+    armScheme = ("space-util-example","all-dim")
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
     banditSims[-1].start()
 
     #change params and run another
-    paramDict["num maps"] = 50
+    armScheme = ("space-util-example","single-dim")
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 2")
     banditSims[-1].start()

@@ -160,8 +160,20 @@ class TeamTaskModel:
         return self.expSuccessRates
 
     #TODO: add capability of non-random selection
-    def selectTrueModel(self,exclude=False):
+    def selectTrueModel(self,exclude=False,mapping=None,task=None):
         #TODO: select randomly
+
+        
+        if ((mapping == None) ^ (task == None)):
+            print "Trying to explicitly assign team-task model, but only one given"
+            assert(0)
+
+        #explicit assignment
+        if (mapping !=None and task != None):
+            print "Explicit assignment of mapping-task pair = ",mapping,task
+            self.trueModelSpecs["task"] = task
+            self.trueModelSpecs["map"] = mapping
+            return
 
         if (exclude == False):
             i = np.random.randint(low=0,high=len(self.taskLocations))
@@ -169,6 +181,7 @@ class TeamTaskModel:
 
             i = np.random.randint(low=0,high=len(self.mapLocations))
             self.trueModelSpecs["map"] = self.mapLocations[i]
+            return
         else:
             #generate map outside params 
             A = np.random.normal(size=(self.skillDim,self.latentDim))
@@ -178,6 +191,8 @@ class TeamTaskModel:
             #generate task randomly
             i = np.random.randint(low=0,high=len(self.taskLocations))
             self.trueModelSpecs["task"] = self.taskLocations[i]
+            return
+
 
     
     """
