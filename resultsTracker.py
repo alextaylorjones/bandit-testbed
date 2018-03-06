@@ -89,7 +89,7 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
                         tracker[j] = tracker[j] + np.array([e[j] for e in trial])
             #plot each arm decision region weight over time
             for j in range(numArms):
-                curLabel = labels[algIndex] + "-" + str(j)
+                curLabel = "arm " + str(j) + " [{0:.3f}".format(float(armMeans[j])) + "]"
                 plt.plot(range(len(tracker[j])),tracker[j],label=curLabel)
 
             plt.title("Decision Region Post. Dist Mass")

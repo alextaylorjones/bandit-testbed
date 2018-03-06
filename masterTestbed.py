@@ -29,7 +29,7 @@ class BanditSimulator(Thread):
         armScheme = paramDict["arm scheme"]
         latentDim =   paramDict["latent dimension"] 
         skillDim =  paramDict["skill dimension"] 
-        skillDim =  paramDict["num maps"] 
+        numMaps =  paramDict["num maps"] 
         ttmResolution= paramDict["model task resolution"] 
         rotResolution = paramDict["rotation resolution"]
         ntsResolution =  paramDict["naive param resolution"] 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(71)
+    np.random.seed(78)
     
     armScheme = ("random",None)
     #alg list
@@ -170,8 +170,8 @@ if __name__ == "__main__":
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 3
-    numMaps = 75
+    skillDim = 4
+    numMaps = 150
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -179,9 +179,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 1
-    horizon = 100
-    numArms = 10
+    trials = 5
+    horizon = 400
+    numArms = 15
     teamSize = 3
 
     """
@@ -205,14 +205,14 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    #banditSims.append(BanditSimulator(paramDict))
-    #banditSims[-1].setName("thread 1")
-    #banditSims[-1].start()
-
-    #change params and run another
-    paramDict["num maps"] = 100
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
+    banditSims[-1].start()
+
+    #change params and run another
+    paramDict["num maps"] = 50
+    banditSims.append(BanditSimulator(paramDict))
+    banditSims[-1].setName("thread 2")
     banditSims[-1].start()
     
     for b in banditSims:
