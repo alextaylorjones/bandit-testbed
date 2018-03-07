@@ -26,6 +26,7 @@ class TeamTaskModel:
         self.skillDim = SKILL_DIM
         self.taskResolution = PT_RES
         self.rotResoluton = ANGLE_RES
+        self.numArms = NUM_ARMS
 
         #note: hardcoded
         taskLocations = []
@@ -109,6 +110,33 @@ class TeamTaskModel:
             self.paramSpace[i][2] = unifValue
 
         print "Resetting param values in team task model"
+
+    def evenDecisionReweight(self):
+
+        decisionWeights = [0.0 for i in range(self.numArms)]
+
+        #calculate decision weights
+        for j,(_,_,w) in enumerate(self.paramSpace):
+            optTeam =  self.optTeamParamMap[j]
+            decisionWeights[optTeam] = decisionWeights[optTeam] + w
+
+        d = float(1.0/self.numArms)
+        for j,(_,_,w) in enumerate(self.paramSpace):
+            optTeam =  self.optTeamParamMap[j]
+            self.paramSpace[j][2] = self.paramSpace[j][2] * float(d/decisionWeights[optTeam])
+
+        if (DEBUG):
+            print "Evenly reweighted decision regions"
+
+            decisionWeights = [0.0 for i in range(self.numArms)]
+
+            #calculate decision weights
+            for j,(_,_,w) in enumerate(self.paramSpace):
+                optTeam =  self.optTeamParamMap[j]
+                decisionWeights[optTeam] = decisionWeights[optTeam] + w
+            print "DECISION WEIGHTS: ",decisionWeights
+
+
 
     def addTeamSkills(self,teams):
         #team is a (skill_dim,team_size) matrix

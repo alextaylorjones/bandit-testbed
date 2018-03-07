@@ -72,7 +72,6 @@ class BanditSimulator(Thread):
                 #select true model
                 ttm.selectTrueModel()
 
-
                 #randomly select teams until we fill each mean bucket
                 meanBuckets = [None for _ in range(numArms)]
                 filledBuckets = 0
@@ -124,15 +123,17 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along 2nd dimension
-                    teamMat[0][1] = 1.0 
+                    teamMat[0][1] = np.random.uniform() 
 
                     for r in range(1,teamSize):
-                        teamMat[r][1] = 0.0
+                        teamMat[r][1] =np.random.uniform() 
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(2,latentDim):
-                        teamMat[0][d] = 0.0
-                        teamMat[1][d] = 1.0 
+                        a = np.random.uniform(2)
+                        teamMat[0][d] = min(a)
+                        teamMat[1][d] = max(a) 
+                        assert(min(a) < max(a))
 
                     #this much of the volume should extend above the dim 0 axis
                     f = heights[i] * armMeans[i]
@@ -164,16 +165,20 @@ class BanditSimulator(Thread):
                     teamMat = np.zeros((teamSize,skillDim))
 
                     #skewer along skewer dimension
-                    teamMat[0][skewerDim] = 1.0 
+                    teamMat[0][skewerDim] = np.random.uniform()
                     for r in range(1,teamSize):
-                        teamMat[r][skewerDim] = 0.0 
+                        teamMat[r][skewerDim] = np.random.uniform() 
 
                     #give volume in all remaining dimensions, but all dominating task
                     for d in range(latentDim):
                         if (d == skewerDim or d == varyDim):
                             continue
-                        teamMat[0][d] = 0.0
-                        teamMat[1][d] = 1.0 
+                        a = np.random.uniform(2)
+                        teamMat[0][d] = min(a)
+                        teamMat[1][d] = max(a) 
+                        assert(min(a) < max(a))
+
+
 
                     #this much of the volume should extend above the dim vary dimension axis
                     f = heights[i] * armMeans[i]
@@ -196,12 +201,22 @@ class BanditSimulator(Thread):
             ttm.addTeamSkills(teams)
 
             ttm.selectTrueModel(mapping=mapping,task=task)
-
-
         else:
             print "No arm scheme by name",
             print armScheme
             assert(False)
+
+
+
+        if (len(armScheme) > 2):
+            """
+                Reweight models so decision regions are equally weighted
+            """
+            if (armScheme[2] == "re-weight"):
+                if (DEBUG):
+                    print "\n\n\n******\n Reweight decision regions for even first selection"
+                ttm.evenDecisionReweight()  
+
 
      
         for cur_trial in range(trials):
@@ -294,7 +309,7 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 3
-    numMaps = 100
+    numMaps = 250
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -302,10 +317,10 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 2
-    horizon = 200
-    numArms = 10
-    teamSize = 3
+    trials = 1
+    horizon = 500
+    numArms = 8
+    teamSize = 2
 
     """
     Fill param dictionary with all params
@@ -328,21 +343,28 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    #paramDict["arm scheme"] = ("space-util-example","all-dim")
-    #banditSims.append(BanditSimulator(paramDict))
-    #banditSims[-1].setName("thread 1")
-    #banditSims[-1].start()
+    paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
+    banditSims.append(BanditSimulator(paramDict))
+    banditSims[-1].setName("thread 1")
+    banditSims[-1].start()
+    
+    paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
+    paramDict["num arms"] = 20
+    banditSims.append(BanditSimulator(paramDict))
+    banditSims[-1].setName("thread 1")
+    banditSims[-1].start()
+
 
     #change params and run another
-    #paramDict["arm scheme"] = ("space-util-example","single-dim")
+    #paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
     #banditSims.append(BanditSimulator(paramDict))
     #banditSims[-1].setName("thread 2")
     #banditSims[-1].start()
 
-    paramDict["arm scheme"] = ("random","well-spaced")
-    banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 1")
-    banditSims[-1].start()
+    #paramDict["arm scheme"] = ("random","well-spaced")
+    #banditSims.append(BanditSimulator(paramDict))
+    #banditSims[-1].setName("thread 1")
+    #banditSims[-1].start()
 
 
     
