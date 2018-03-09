@@ -6,7 +6,7 @@ from threading  import Thread
 import math
 
 DEBUG = True
-
+EPSILON = 0.05
 
 class BanditSimulator(Thread):
     paramDict = {}
@@ -57,6 +57,8 @@ class BanditSimulator(Thread):
         #done once for all trials
         #select team locations, task and mapping 
         teams = []
+
+
         if (armScheme[0] == "random"):
             if (armScheme[1] == None):
                 for _ in range(numArms):
@@ -90,8 +92,54 @@ class BanditSimulator(Thread):
                         #fill bucket if not team in bucket
                         meanBuckets[bucketID] = team
 
-
                 ttm.addTeamSkills(meanBuckets)
+
+            elif (armScheme[1] == "clustered"):
+
+                numClusters = armScheme[2]
+                allTeams = []
+                assert(numClusters > 0)
+                #select true model
+                ttm.selectTrueModel()
+
+                #randomly select teams until we fill each mean bucket
+                meanBuckets = [None for _ in range(numClusters)]
+                filledBuckets = 0
+                width = float(1.0/numClusters)
+                while (filledBuckets < len(meanBuckets)):
+                    #generate random team
+                    team = np.random.uniform(low=-1.0,high = 1.0,size=(teamSize,skillDim))
+                    #see if bucket is filled
+                    m = ttm.getTrueSuccessRate(team)
+                    bucketID = int(math.floor(m / width))-1
+                    print "Bucket ID", bucketID
+                    if (meanBuckets[bucketID] == None):
+                        filledBuckets = filledBuckets + 1
+                        if (DEBUG):
+                            print "Filling ",filledBuckets, " out of ",len(meanBuckets), "buckets"
+                        #fill bucket if not team in bucket
+                        meanBuckets[bucketID] = team
+                        allTeams.append(team)
+
+                # each bucket is a landmark, 
+                #other teams are built close to that team
+                for team in meanBuckets:
+                    
+                    print "Original team: ", team
+                    #wiggle team
+                    for i in range(int(numArms/numClusters)-1):
+                        epsilonShift = EPSILON*np.random.uniform(teamSize,skillDim)
+                        shiftedTeam = team + epsilonShift
+                        allTeams.append(shiftedTeam)
+                        print "New team: ",shiftedTeam
+
+                    
+                if (DEBUG):
+                    assert(len(allTeams) == numArms)
+                #add all teams to model    
+                ttm.addTeamSkills(allTeams) 
+
+            
             else:
                 print "Incorrect subscheme for random",armScheme
                 assert(0)
@@ -217,10 +265,8 @@ class BanditSimulator(Thread):
                     print "\n\n\n******\n Reweight decision regions for even first selection"
                 ttm.evenDecisionReweight()  
 
-
-     
-        for cur_trial in range(trials):
                   
+        for cur_trial in range(trials):
             if (DEBUG):
                 print "Starting trial ",cur_trial
 
@@ -255,14 +301,18 @@ class BanditSimulator(Thread):
             rewards,armMeans = ttm.generateAllArmRewards(horizon)
             
             #sanity check for no arm fouling between trials
+            """
             if (self.armMeans != None):
                 assert(armMeans == self.armMeans)
+            """
 
             #Save arm reward means
             if (self.armMeans == None):
                 self.armMeans = armMeans
             else: #ensure that these means dont change in between trials
+                """
                 assert(self.armMeans == armMeans)
+                """
 
             for t in range(horizon):
                 print "(trial ",cur_trial,": time ",t,")"
@@ -299,9 +349,10 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(78)
+    np.random.seed(70)
     
-    armScheme = ("random",None)
+    armScheme = ("random","clustered",4)
+    armScheme = ("random","well-spaced")
     #armScheme = ("space-util-example","all-dim")
     #alg list
     algorithms = ["naive-TS","MA-TS","UCB1"]
@@ -309,7 +360,7 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 3
-    numMaps = 250
+    numMaps = 100
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -317,9 +368,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 1
-    horizon = 500
-    numArms = 8
+    trials = 5
+    horizon = 300
+    numArms = 40
     teamSize = 2
 
     """
@@ -343,17 +394,9 @@ if __name__ == "__main__":
     Run one test
     """
     banditSims = []
-    paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 1")
     banditSims[-1].start()
-    
-    paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
-    paramDict["num arms"] = 20
-    banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 1")
-    banditSims[-1].start()
-
 
     #change params and run another
     #paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
