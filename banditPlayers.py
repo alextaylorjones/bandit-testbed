@@ -150,6 +150,7 @@ class BanditPlayer:
                 print "Thought these were bernoulli rvs?"
                 assert(False)
             
+            # calculate decision region posterior weights
             track = [0.0 for _ in range(self.numArms)]
 
             #normalize to prob distribution
@@ -188,6 +189,49 @@ class BanditPlayer:
             #normalize to prob distribution
             for i in range(len(paramList)):
                 paramList[i][1] = paramList[i][1]/totalWeight
+
+            #calculate decision regions
+            f = np.zeros((numArms,len(paramList)))
+            F = np.zeros((numArms,len(paramList)))
+
+            #calculate pdfs for all arms
+            for a in range(self.numArms):
+                tempParams = self.armModel.getParamSpace(a)
+                for i in range(len(paramsList)):
+                    f[a][i] = paramList[i][1]
+            if (DEBUG):
+                print "Calculated pdfs",f
+
+            #calculate (strictly less than) cdfs for all arms
+            for a in range(self.numArms):
+                cumSum = 0.0
+                for i in range(len(paramsList)):
+                    F[a][i] = cumSum
+                    cumSum = cumSum + f[a][i]
+            if (DEBUG):
+                print "calculated (strictly less than) cdfs",F
+
+            #calculate weight of decision regions
+            tracker = [0.0 for _ in range(self.numArms)]
+
+            for a in range(self.numArms):
+                weight = 0.0
+                for i in range(len(paramList)):
+                    cumProd = 1.0
+                    for b in range(self.numArms):
+                        if (b == a):
+                            continue
+                        cumProd = cumProd*F[b][i]
+                    weight = weight + cumProd*f[a][i]
+
+                track[a] = weight
+
+
+            if (DEBUG):
+                print "Calculated decision weights",track
+
+
+            return track
 
         else:
             print "ERROR: No policy with name ", self.name

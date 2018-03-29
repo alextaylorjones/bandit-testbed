@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from masterTestbed import BanditSimulator
 
 DEBUG = False
 
@@ -104,6 +105,11 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
 
 
 
+def plotClusterPosteriors(listOfBanditSims):
+    print "Plotting cluster posteriors"
+    for bSim in listOfBanditSims:
+        #Get a 
+        decisionRegionTracker = b.decisionRegionTracker
 
 def plotTeamBoxes(banditSimulation):
     print "Plotting team boxes"

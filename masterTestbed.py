@@ -1,6 +1,6 @@
 from banditPlayers import BanditPlayer
 from armModel import TeamTaskModel, NaiveArmModel
-from resultsTracker import plotRegret, plotTeamBoxes
+from resultsTracker import *
 import numpy as np
 from threading  import Thread
 import math
@@ -105,13 +105,16 @@ class BanditSimulator(Thread):
                 #randomly select teams until we fill each mean bucket
                 meanBuckets = [None for _ in range(numClusters)]
                 filledBuckets = 0
-                width = float(1.0/numClusters)
+                MAX_SUCCESS = 0.9
+                width = float(MAX_SUCCESS/numClusters)
                 while (filledBuckets < len(meanBuckets)):
                     #generate random team
                     team = np.random.uniform(low=-1.0,high = 1.0,size=(teamSize,skillDim))
                     #see if bucket is filled
                     m = ttm.getTrueSuccessRate(team)
-                    bucketID = int(math.floor(m / width))-1
+                    if (m > MAX_SUCCESS):
+                        continue
+                    bucketID = int(math.ceil(m / width))-1
                     print "Bucket ID", bucketID
                     if (meanBuckets[bucketID] == None):
                         filledBuckets = filledBuckets + 1
@@ -119,25 +122,25 @@ class BanditSimulator(Thread):
                             print "Filling ",filledBuckets, " out of ",len(meanBuckets), "buckets"
                         #fill bucket if not team in bucket
                         meanBuckets[bucketID] = team
-                        allTeams.append(team)
 
                 # each bucket is a landmark, 
                 #other teams are built close to that team
+                orderedTeams = []
                 for team in meanBuckets:
-                    
+                    orderedTeams.append(team) 
                     print "Original team: ", team
                     #wiggle team
                     for i in range(int(numArms/numClusters)-1):
                         epsilonShift = EPSILON*np.random.uniform(teamSize,skillDim)
                         shiftedTeam = team + epsilonShift
-                        allTeams.append(shiftedTeam)
+                        orderedTeams.append(shiftedTeam)
                         print "New team: ",shiftedTeam
 
                     
                 if (DEBUG):
-                    assert(len(allTeams) == numArms)
+                    assert(len(orderedTeams) == numArms)
                 #add all teams to model    
-                ttm.addTeamSkills(allTeams) 
+                ttm.addTeamSkills(orderedTeams) 
 
             
             else:
@@ -349,28 +352,27 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(70)
+    np.random.seed(73)
     
-    armScheme = ("random","clustered",4)
-    armScheme = ("random","well-spaced")
+    armScheme = ("random",None)
     #armScheme = ("space-util-example","all-dim")
     #alg list
     algorithms = ["naive-TS","MA-TS","UCB1"]
 
     #params for MA-TS
     latentDim = 2
-    skillDim = 3
-    numMaps = 100
-    ttmResolution = 0.1
+    skillDim = 4
+    numMaps = 200
+    ttmResolution = 0.05
     rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
     ntsResolution = 0.05
 
     #general parameters
-    trials = 5
-    horizon = 300
-    numArms = 40
+    trials = 2
+    horizon = 200
+    numArms = 25
     teamSize = 2
 
     """
@@ -391,34 +393,49 @@ if __name__ == "__main__":
     paramDict["team size"] = teamSize
 
     """
-    Run one test
+    Run test threads
     """
     banditSims = []
+
+    paramDict["arm scheme"] = ("random","clustered",5)
     banditSims.append(BanditSimulator(paramDict))
-    banditSims[-1].setName("thread 1")
+    banditSims[-1].setName("thread 2")
     banditSims[-1].start()
 
-    #change params and run another
-    #paramDict["arm scheme"] = ("space-util-example","all-dim","re-weight")
-    #banditSims.append(BanditSimulator(paramDict))
-    #banditSims[-1].setName("thread 2")
-    #banditSims[-1].start()
+    """
+    paramDict["arm scheme"] = ("random","clustered",10)
+    banditSims.append(BanditSimulator(paramDict))
+    banditSims[-1].setName("thread 2")
+    banditSims[-1].start()
 
-    #paramDict["arm scheme"] = ("random","well-spaced")
-    #banditSims.append(BanditSimulator(paramDict))
-    #banditSims[-1].setName("thread 1")
-    #banditSims[-1].start()
 
+    paramDict["arm scheme"] = ("random","clustered",25)
+    banditSims.append(BanditSimulator(paramDict))
+    banditSims[-1].setName("thread 2")
+    banditSims[-1].start()
+    """
 
     
     for b in banditSims:
         b.join()
 
+    clusteredInstances = []
     for b in banditSims:
         plotRegret(b.results,b.decisionRegionTracker,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
+        
+        #If clustering was applied, show the posterior mass of the clusters
+        if (len(b.paramDict["arm scheme"]) >= 3):
+            if (b.paramDict["arm scheme"][1].startswith("clustered")):
+                if (DEBUG):
+                    print "Showing cluster posterior masses"
+                clusteredInstances.append(b)
+    
+
+    plotClusterPosteriors(clusteredInstances)
 
         #if (b.paramDict["latent dimension"] == 2) :
         #    plotTeamBoxes(b)
+
 
 
 
