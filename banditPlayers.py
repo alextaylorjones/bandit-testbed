@@ -191,28 +191,28 @@ class BanditPlayer:
                 paramList[i][1] = paramList[i][1]/totalWeight
 
             #calculate decision regions
-            f = np.zeros((numArms,len(paramList)))
-            F = np.zeros((numArms,len(paramList)))
+            f = np.zeros((self.numArms,len(paramList)))
+            F = np.zeros((self.numArms,len(paramList)))
 
             #calculate pdfs for all arms
             for a in range(self.numArms):
                 tempParams = self.armModel.getParamSpace(a)
-                for i in range(len(paramsList)):
-                    f[a][i] = paramList[i][1]
+                for i in range(len(paramList)):
+                    f[a][i] = tempParams[i][1]
             if (DEBUG):
                 print "Calculated pdfs",f
 
             #calculate (strictly less than) cdfs for all arms
             for a in range(self.numArms):
                 cumSum = 0.0
-                for i in range(len(paramsList)):
+                for i in range(len(paramList)):
                     F[a][i] = cumSum
                     cumSum = cumSum + f[a][i]
             if (DEBUG):
                 print "calculated (strictly less than) cdfs",F
 
             #calculate weight of decision regions
-            tracker = [0.0 for _ in range(self.numArms)]
+            track = [0.0 for _ in range(self.numArms)]
 
             for a in range(self.numArms):
                 weight = 0.0
@@ -223,7 +223,7 @@ class BanditPlayer:
                             continue
                         cumProd = cumProd*F[b][i]
                     weight = weight + cumProd*f[a][i]
-
+                print "Weight is ",weight, "for arm ",a
                 track[a] = weight
 
 

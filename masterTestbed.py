@@ -22,7 +22,8 @@ class BanditSimulator(Thread):
         self.paramDict = paramDict.copy()
 
     def run(self):
-        """Unpack params
+        """
+        Unpack params
         """
         paramDict = self.paramDict
         algorithms = paramDict["algorithms"] 
@@ -362,17 +363,17 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 200
-    ttmResolution = 0.05
+    numMaps = 100
+    ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
     ntsResolution = 0.05
 
     #general parameters
-    trials = 2
-    horizon = 200
-    numArms = 25
+    trials = 1 
+    horizon = 40
+    numArms = 6
     teamSize = 2
 
     """
@@ -397,7 +398,7 @@ if __name__ == "__main__":
     """
     banditSims = []
 
-    paramDict["arm scheme"] = ("random","clustered",5)
+    paramDict["arm scheme"] = ("random","clustered",2)
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 2")
     banditSims[-1].start()
@@ -420,18 +421,28 @@ if __name__ == "__main__":
         b.join()
 
     clusteredInstances = []
+    clusterSizes = []
+
     for b in banditSims:
         plotRegret(b.results,b.decisionRegionTracker,str(b.paramDict),b.paramDict["algorithms"],b.optAvg,b.optIndex,b.armMeans)
+        plotTeamBoxes(b)
         
         #If clustering was applied, show the posterior mass of the clusters
         if (len(b.paramDict["arm scheme"]) >= 3):
             if (b.paramDict["arm scheme"][1].startswith("clustered")):
+                numClusters = b.paramDict["arm scheme"][2]
+                numArms = b.paramDict["num arms"] 
+                if (numArms % numClusters > 0):
+                    print "ERROR CANNOT DEAL WITH UNEVEN CLUSTERS NOW"
+                    continue
                 if (DEBUG):
                     print "Showing cluster posterior masses"
                 clusteredInstances.append(b)
+                clusterSizes.append(numClusters*[numArms/numClusters])
     
 
-    plotClusterPosteriors(clusteredInstances)
+    print "Before calling plot clusters"
+    plotClusterPosteriors(clusteredInstances,clusterSizes)
 
         #if (b.paramDict["latent dimension"] == 2) :
         #    plotTeamBoxes(b)

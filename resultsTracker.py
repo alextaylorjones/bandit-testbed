@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from masterTestbed import BanditSimulator
+import math
 
 DEBUG = False
 
@@ -69,7 +70,6 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
     
     """
     Show decision region weight evolution
-    """
     for algIndex,top_list in enumerate(decisionRegionTracker):
         if (labels[algIndex] == "MA-TS"):
             plt.figure(3+algIndex)
@@ -88,6 +88,7 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
                         tracker[j] = np.array([e[j] for e in trial])
                     else:
                         tracker[j] = tracker[j] + np.array([e[j] for e in trial])
+
             #plot each arm decision region weight over time
             for j in range(numArms):
                 curLabel = "arm " + str(j) + " [{0:.3f}".format(float(armMeans[j])) + "]"
@@ -97,6 +98,7 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
             plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
             plt.legend()
 
+    """
 
     """
     Show all plots
@@ -104,12 +106,64 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
     plt.show()
 
 
-
-def plotClusterPosteriors(listOfBanditSims):
+#clusterSizes = a list of part sizes (assumes arms are ordered)
+def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes):
     print "Plotting cluster posteriors"
-    for bSim in listOfBanditSims:
-        #Get a 
+    
+    plt.figure(5)
+    
+    for index,b in enumerate(listOfBanditSims):
+        clusterSizes = listOfClusterSizes[index]
+
+        #Ensure this bandit sim had clustered arm scheme 
+        if (len(b.paramDict["arm scheme"]) > 2):
+            if (b.paramDict["arm scheme"][1].startswith("clustered") == False):
+                continue
+
         decisionRegionTracker = b.decisionRegionTracker
+        for algIndex,top_list in enumerate(decisionRegionTracker):
+            if (b.paramDict["algorithms"][algIndex].endswith("TS") == False):
+                #only plot TS results
+                continue
+                
+            #create a list of length= number of clusters
+            numClusters = len(clusterSizes)
+            tracker = []
+            for _ in range(len(clusterSizes)):
+                tracker.append([])
+            #zip together all trials together
+            for i,trial in enumerate(top_list):
+                #each on of these are the results of one trial
+                clusterId = 0
+                clusterCount = 0
+                for j in range(b.paramDict["num arms"]):
+                    #ensure we are appending to the right cluster tracker
+                    clusterCount = clusterCount + 1
+                    if (clusterCount > clusterSizes[clusterId]):
+                        clusterId = clusterId + 1
+                        clusterCount = 1
+
+                    #horizon-length tracker list hasnt been created
+                    if (i == 0):
+                        #take jth element of list and make a horizon-length list of weights
+                        print "Trial Results",trial
+                        tracker[clusterId] = np.array([e[j] for e in trial])
+                    else:
+                        print "Trial Results",trial
+                        tracker[clusterId] = tracker[clusterId] + np.array([e[j] for e in trial])
+            for i in range(len(clusterSizes)):
+                #normalize tracker over the number of trials
+                tracker[i] = tracker[i] * (1.0/len(top_list))
+                #label with current algorithm and cluster ID
+                curLabel = "cluster " + str(j) + "" + b.paramDict["algorithms"][algIndex]
+                #plot
+                plt.plot(range(len(tracker[i])),tracker[i],label=curLabel)
+
+        plt.title("Decision Region Post. Dist Mass")
+        plt.figtext(0.99,0.01,"armmeans = " + str(bSim.armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+        plt.legend()
+
+    plt.show()
 
 def plotTeamBoxes(banditSimulation):
     print "Plotting team boxes"
