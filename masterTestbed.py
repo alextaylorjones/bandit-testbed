@@ -442,7 +442,7 @@ if __name__ == "__main__":
     
 
     print "Before calling plot clusters"
-    plotClusterPosteriors(clusteredInstances,clusterSizes)
+    plotClusterPosteriors(clusteredInstances,clusterSizes,str(b.paramDict))
 
         #if (b.paramDict["latent dimension"] == 2) :
         #    plotTeamBoxes(b)

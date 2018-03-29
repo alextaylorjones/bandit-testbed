@@ -107,7 +107,7 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
 
 
 #clusterSizes = a list of part sizes (assumes arms are ordered)
-def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes):
+def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
     print "Plotting cluster posteriors"
     
     plt.figure(5)
@@ -160,7 +160,7 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes):
                 plt.plot(range(len(tracker[i])),tracker[i],label=curLabel)
 
         plt.title("Decision Region Post. Dist Mass")
-        plt.figtext(0.99,0.01,"armmeans = " + str(bSim.armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+        plt.figtext(0.99,0.01,""+ paramText,horizontalalignment = 'right')
         plt.legend()
 
     plt.show()
