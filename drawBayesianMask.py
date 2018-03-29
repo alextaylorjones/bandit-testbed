@@ -29,8 +29,8 @@ ax = fig.gca(projection='3d')
 # Ma.ke data.
 p1 = Rectangle(
         (0.1, 0.1),   # (x,y)
-        0.8,          # width
-        0.5,          # height
+        0.5,          # width
+        0.8,          # height
         color="green",
         alpha=0.3
     )
@@ -60,8 +60,8 @@ art3d.pathpatch_2d_to_3d(p1, z=0, zdir="z")
 
 
 
-X = np.arange(0, 1, 0.05)
-Y = np.arange(0, 1, 0.05)
+X = np.arange(-1, 1, 0.02)
+Y = np.arange(-1, 1, 0.02)
 Z1 = np.zeros((len(X),len(Y)))
 Z2 = np.zeros((len(X),len(Y)))
 for (i,x) in enumerate(X):
@@ -88,6 +88,7 @@ for (i,x) in enumerate(X):
             
 
         Z1[i][j] = successProb
+
         #2nd
         successProb = 1.0
         w2 = h2x - x
@@ -111,7 +112,7 @@ for (i,x) in enumerate(X):
 
         Z2[i][j] = successProb
 
-
+print "Prob mask",Z1
 
 X, Y = np.meshgrid(X, Y)
 
@@ -127,6 +128,10 @@ surf1 = ax.plot_surface(X, Y, Z1, cmap=cm.coolwarm,
 ax.set_zlim(.00, 1.00)
 ax.zaxis.set_major_locator(LinearLocator(10))
 ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+ax.set_xlabel("Task X Coordinate")
+ax.set_ylabel("Task Y Coordinate")
+ax.set_zlabel("Team Success Probability")
 
 # Add a color bar which maps values to colors.
 fig.colorbar(surf1, shrink=0.5, aspect=5)
