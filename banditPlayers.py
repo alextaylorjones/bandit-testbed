@@ -65,9 +65,7 @@ class BanditPlayer:
             return self.armModel.optTeamParamMap[sampled_param]
 
         elif (self.name == "naive-TS"):
-            
             sampledParams = np.zeros(len(self.armModel.getArms()))
-
             for a in self.armModel.getArms():
                 #if (DEBUG):
                     #print "Param Space Arm ",a,", = ",self.armModel.getParamSpace(a)
@@ -225,6 +223,8 @@ class BanditPlayer:
                     weight = weight + cumProd*f[a][i]
                 print "Weight is ",weight, "for arm ",a
                 track[a] = weight
+
+            print "Total weight is ",sum(track)
 
 
             if (DEBUG):

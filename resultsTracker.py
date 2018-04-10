@@ -109,9 +109,7 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
 #clusterSizes = a list of part sizes (assumes arms are ordered)
 def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
     print "Plotting cluster posteriors"
-    
     plt.figure(5)
-    
     for index,b in enumerate(listOfBanditSims):
         clusterSizes = listOfClusterSizes[index]
 
@@ -125,7 +123,6 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
             if (b.paramDict["algorithms"][algIndex].endswith("TS") == False):
                 #only plot TS results
                 continue
-                
             #create a list of length= number of clusters
             numClusters = len(clusterSizes)
             tracker = []
@@ -146,16 +143,16 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
                     #horizon-length tracker list hasnt been created
                     if (i == 0):
                         #take jth element of list and make a horizon-length list of weights
-                        print "Trial Results",trial
+                        #print "Trial Results",trial
                         tracker[clusterId] = np.array([e[j] for e in trial])
                     else:
-                        print "Trial Results",trial
+                        #print "Trial Results",trial
                         tracker[clusterId] = tracker[clusterId] + np.array([e[j] for e in trial])
             for i in range(len(clusterSizes)):
                 #normalize tracker over the number of trials
-                tracker[i] = tracker[i] * (1.0/len(top_list))
+                tracker[i] = tracker[i]
                 #label with current algorithm and cluster ID
-                curLabel = "cluster " + str(j) + "" + b.paramDict["algorithms"][algIndex]
+                curLabel = "cluster " + str(i) + "" + b.paramDict["algorithms"][algIndex]
                 #plot
                 plt.plot(range(len(tracker[i])),tracker[i],label=curLabel)
 

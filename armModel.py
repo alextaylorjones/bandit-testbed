@@ -2,6 +2,7 @@ import math
 import numpy as np
 
 DEBUG = True
+EPSILON = 0.000
 
 class TeamTaskModel:
 
@@ -141,15 +142,15 @@ class TeamTaskModel:
     def addTeamSkills(self,teams):
         #team is a (skill_dim,team_size) matrix
         self.teamSkills = teams
+        self.optTeamParamMap = []
 
         #calculate expected success rate for all pts in space
-    
         if (DEBUG):
-            print "Begining calculation of all success rates ....",
+            print "Beginning calculation of all success rates ....",
         for j,(x,M,w) in enumerate(self.paramSpace):
             #print "Measuring success for param number ",j, "out of ", len(self.paramSpace)
             optTeam = None
-            maxSuccessRate = -1
+            maxSuccessRate = 0.0
             for i,team in enumerate(teams):
                 # mapping team into latent space
                 latentImage = np.dot(team,M)
@@ -157,15 +158,15 @@ class TeamTaskModel:
                 #find boundaries of box
                 lowerBoxBounds = np.min(latentImage,0)
                 upperBoxBounds = np.max(latentImage,0)
-                
                 #print "For team ",i," bounds are :",lowerBoxBounds,upperBoxBounds
 
                 successRate = 1.0
                 for d in range(self.latentDim):
                     #add extra term due to discrete space
-                    delta = upperBoxBounds[d] - x[d] + self.taskResolution
+                    delta = upperBoxBounds[d] - x[d]
+
                     if (delta < 0.0):
-                        successRate = 0
+                        successRate = EPSILON
                         break
                     else:
                         #multiply success rate by fractional overlap in dimension d
@@ -176,7 +177,7 @@ class TeamTaskModel:
                     maxSuccessRate = successRate
                 self.expSuccessRates.append(successRate)
 
-            #sanity
+            #sanity (some team has non-zero success rate
             assert(optTeam != None)
 
             #save which team is optimal for parameter j
@@ -234,9 +235,9 @@ class TeamTaskModel:
         successRate = 1.0
         for d in range(self.latentDim):
             # since we are in discrete space, count equal overlap as single segment
-            delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d] + self.taskResolution
+            delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
             if (delta < 0.0):
-                successRate = 0
+                successRate = EPSILON
                 break
             else:
                 #multiply success rate by fractional overlap in dimension d
@@ -264,7 +265,7 @@ class TeamTaskModel:
             successRate = 1.0
             for d in range(self.latentDim):
                 # since we are in discrete space, count equal overlap as single segment
-                delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d] + self.taskResolution
+                delta = upperBoxBounds[d] - (self.trueModelSpecs["task"])[d]
                 if (delta < 0.0):
                     successRate = 0
                     break

@@ -113,7 +113,7 @@ class BanditSimulator(Thread):
                     team = np.random.uniform(low=-1.0,high = 1.0,size=(teamSize,skillDim))
                     #see if bucket is filled
                     m = ttm.getTrueSuccessRate(team)
-                    if (m > MAX_SUCCESS):
+                    if (m <= 0.01 or m > MAX_SUCCESS):
                         continue
                     bucketID = int(math.ceil(m / width))-1
                     print "Bucket ID", bucketID
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 100
+    numMaps = 200
     ttmResolution = 0.1
     rotResolution = math.pi/2.0 #45 deg.
 
@@ -371,9 +371,9 @@ if __name__ == "__main__":
     ntsResolution = 0.05
 
     #general parameters
-    trials = 1 
-    horizon = 40
-    numArms = 6
+    trials = 5
+    horizon = 200
+    numArms = 24
     teamSize = 2
 
     """
@@ -398,7 +398,7 @@ if __name__ == "__main__":
     """
     banditSims = []
 
-    paramDict["arm scheme"] = ("random","clustered",2)
+    paramDict["arm scheme"] = ("random","clustered",4)
     banditSims.append(BanditSimulator(paramDict))
     banditSims[-1].setName("thread 2")
     banditSims[-1].start()
