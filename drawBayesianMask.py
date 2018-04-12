@@ -26,14 +26,14 @@ import math
 
 PLOT_ALL,PLOT_MAX = (True,False)
 
-np.random.seed(523123102398)
+np.random.seed(1771)
 colors = ['b','r','g',"purple","orange",'y']
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
 """
  #Specific to 2 rectangles
- 
+
 # Ma.ke data.
 p1 = Rectangle(
         (0.3, -0.3),   # (x,y)
@@ -185,30 +185,29 @@ X = np.arange(math.floor(x_globmin),math.ceil(x_globmax),RES)
 Y = np.arange(math.floor(y_globmin),math.ceil(y_globmax),RES)
 print "X = ",X
 print "Y = ",Y
-Z = [None for _ in range(NUM_RECTS+1)]
+Z = {}
 
 for i in range(NUM_RECTS+1):
-    Z[i] = np.zeros((len(X),len(Y)))
+    Z[i] = []
 print Z
 
 for (k,rect) in enumerate(rects):
     print "Team k's rect is:",rect
     for (i,x) in enumerate(X):
         for (j,y) in enumerate(Y):
-            zmax = 0.0
+
             xmin,xmax,ymin,ymax = rect
             prob = 1.0
 
             # x;s
             fx = xmax - x
             if (fx <= 0.0):
-               prob = 0.0 
+               prob = 0.0
 
             elif (fx < xmax - xmin):
                 prob = prob * float(fx/(xmax-xmin))
             #y;s
             fy = ymax - y
-            prob = 1.0
 
             if (fy <= 0.0):
                prob = 0.0
@@ -217,13 +216,10 @@ for (k,rect) in enumerate(rects):
                 prob = prob * float(fx/(xmax-xmin))
 
             print "Success probability of team ",k," on pt ", (x,y),"is ",prob
-            Z[k][i][j] = prob
-
-            if (prob > zmax):
-                zmax = prob
+            Z[k].append(prob)
 
 X, Y = np.meshgrid(X, Y)
-
+print "All Z:",Z
 
 # Plot the surface.
 #surf1 = ax.plot_surface(X, Y, Z1, cmap=cm.coolwarm,
@@ -235,7 +231,7 @@ if (PLOT_ALL):
     surf = None
 
     for i in range(NUM_RECTS):
-        surf = ax.plot_surface(X, Y, list(Z[i]), cmap=cm.coolwarm, linewidth=0, alpha=0.75, antialiased=False)
+        surf = ax.plot_surface(X, Y, np.array(Z[i]).reshape((len(X),len(Y))), cmap=cm.coolwarm, linewidth=0, alpha=0.75, antialiased=False)
 
     # Customize the z axis.
     ax.set_zlim(-1, 1.00)

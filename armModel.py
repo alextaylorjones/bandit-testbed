@@ -75,7 +75,7 @@ class TeamTaskModel:
         #    print "Task locations",taskLocations
 
         # maplocations
-        #  
+        #
         mapLocations = []
         for x in range(NUM_MAPS):
             A = np.random.uniform(size=(SKILL_DIM,LATENT_DIM))
@@ -103,7 +103,7 @@ class TeamTaskModel:
         self.mapLocations = mapLocations
         self.paramSpace = paramSpace
 
-    
+
     def reset(self):
         #reset weights to uniform weights
         unifValue = float(1.0/len(self.paramSpace))
@@ -182,8 +182,8 @@ class TeamTaskModel:
 
             #save which team is optimal for parameter j
             self.optTeamParamMap.append(optTeam)
-            
-                #old 
+
+                #old
                 #self.expSuccessRates[(i,j)] = successRate
         if (DEBUG):
             print "Successfully calculate all success rates"
@@ -195,7 +195,7 @@ class TeamTaskModel:
     def selectTrueModel(self,exclude=False,mapping=None,task=None):
         #TODO: select randomly
 
-        
+
         if ((mapping == None) ^ (task == None)):
             print "Trying to explicitly assign team-task model, but only one given"
             assert(0)
@@ -215,7 +215,7 @@ class TeamTaskModel:
             self.trueModelSpecs["map"] = self.mapLocations[i]
             return
         else:
-            #generate map outside params 
+            #generate map outside params
             A = np.random.normal(size=(self.skillDim,self.latentDim))
             Q,R = np.linalg.qr(A)
             self.trueModelSpecs["map"] = Q
@@ -245,6 +245,8 @@ class TeamTaskModel:
         return successRate
 
 
+
+
     """
     Calculate true parameter for each team, then generate samples for associated RV
     """
@@ -259,7 +261,7 @@ class TeamTaskModel:
             #find boundaries of box
             lowerBoxBounds = np.min(latentImage,0)
             upperBoxBounds = np.max(latentImage,0)
-            
+
             print "For team ",i,", true bounds (min,max) are :",lowerBoxBounds,upperBoxBounds
 
             successRate = 1.0
@@ -284,7 +286,7 @@ class TeamTaskModel:
     """ #Do not perform recalculation
     def getOptArm(self,model):
 
-        
+
         task = model[0]
         mapping = model[1]
 
@@ -295,7 +297,7 @@ class TeamTaskModel:
             #find boundaries of box
             lowerBoxBounds = np.min(latentImage,0)
             upperBoxBounds = np.max(latentImage,0)
-            
+
             #if (DEBUG):
                 #print "For this team, true bounds are :",lowerBoxBounds,upperBoxBounds
 
@@ -324,6 +326,23 @@ class TeamTaskModel:
         return self.paramSpace
 
 
+#task pt is k dimensions
+# box coorindates is 2*k arrray
+def getSuccessProb(taskPt,boxCoordinates):
+    assert(len(taskPt)*2 == len(boxCoordinates))
+    prob = 1.0
+    for i,c in enumerate(taskPt):
+        mn,mx = boxCoordinates[(2*i):(2*i+2)]
+        assert(mn < mx)
+        d = mx - mn
+        if (mx < taskPt[i]):
+            prob = EPSILON
+            return prob
+        elif (mn > taskPt[i]):
+            continue
+        else:
+            prob = prob * (mx-taskPt[i])/d
+    return prob
 
 class NaiveArmModel:
 
@@ -337,7 +356,7 @@ class NaiveArmModel:
         self.numArms = numArms
         self.resolution = resolution
 
-        # each arms has list of potential parameters of arm observation/reward distributions 
+        # each arms has list of potential parameters of arm observation/reward distributions
         for a in range(numArms):
             params = np.arange(0,1+resolution,resolution)
             weights = [float(1.0/len(params))]*len(params)
@@ -359,6 +378,3 @@ class NaiveArmModel:
             self.armParams[a] = [[entry[0],unifVal] for entry in self.armParams[a]]
 
         print "Resetting param values in naive arm model"
-
-
-
