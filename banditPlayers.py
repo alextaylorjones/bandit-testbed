@@ -87,7 +87,7 @@ class BanditPlayer:
                     exit()
                 #just append param value to list
                 sampledParams[a] = sampled_param[0]
-                 
+
 
             #ensure we made a selection
             assert(sampledParams != [])
@@ -124,7 +124,7 @@ class BanditPlayer:
         if (self.name == "UCB1"):
             #get total rewards up to now
             prevReward = (self.armStatsUCB[armIndex])[1] * self.armStatsUCB[armIndex][0]
-            #add new reward to get complete total 
+            #add new reward to get complete total
             newReward = (prevReward + rewardValue)
             #inc arm play count
             self.armStatsUCB[armIndex][0] = self.armStatsUCB[armIndex][0] + 1
@@ -147,14 +147,14 @@ class BanditPlayer:
             else:
                 print "Thought these were bernoulli rvs?"
                 assert(False)
-            
+
             # calculate decision region posterior weights
             track = [0.0 for _ in range(self.numArms)]
 
             #normalize to prob distribution
             for j,(x,M,w) in enumerate(paramList):
                 paramList[j][2] =  paramList[j][2] /totalWeight
-                
+
                 optTeam = self.armModel.optTeamParamMap[j]
                 #add model weight to tracker list
                 track[optTeam] = track[optTeam] + paramList[j][2]
@@ -165,7 +165,8 @@ class BanditPlayer:
 
 
         elif (self.name == "naive-TS"):
-
+            ## HACK:
+            return
             totalWeight = 0.0
             #list of (param, weight) values
             paramList = self.armModel.getParamSpace(armIndex)
@@ -237,5 +238,3 @@ class BanditPlayer:
             print "ERROR: No policy with name ", self.name
             assert(0)
         return []
-            
-

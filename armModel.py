@@ -172,9 +172,10 @@ class TeamTaskModel:
                         #multiply success rate by fractional overlap in dimension d
                         successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
 
-                if (maxSuccessRate < successRate):
+                if (maxSuccessRate <= successRate):
                     optTeam = i
                     maxSuccessRate = successRate
+                #print "Success rate is",successRate
                 self.expSuccessRates.append(successRate)
 
             #sanity (some team has non-zero success rate

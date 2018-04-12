@@ -19,11 +19,11 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
             if (DEBUG):
                 print "Trial (",i,") Algorithm (",a,") = ",trial
             #each on of these are the results of one trial
-            if (avg_list == None):
-                #add reward from trial to avg list 
+            if (avg_list is None):
+                #add reward from trial to avg list
                 avg_list = np.array([e[1] for e in trial])
             else:
-                #add reward from trial to avg list 
+                #add reward from trial to avg list
                 avg_list = avg_list + np.array([e[1] for e in trial])
 
         avg_list = [(a/float(len(top_list))) for a in avg_list]
@@ -44,8 +44,8 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
         """
         Plot Number of times optimal arm has been selected
         """
-        
-        optCountList = None 
+
+        optCountList = None
         for i,trial in enumerate(top_list):
             if (optCountList == None):
                 optCountList = []
@@ -57,17 +57,17 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
             else:
                 for i,(index,reward) in enumerate(trial):
                     if (index == optIndex):
-                        optCountList[i] = optCountList[i] + 1 
+                        optCountList[i] = optCountList[i] + 1
 
         optCountListCum = np.cumsum(np.array(optCountList))
 
         plt.plot(range(len(optCountListCum)),optCountListCum,label=labels[algIndex])
 
 
-    
+
     plt.legend()
     plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
-    
+
     """
     Show decision region weight evolution
     for algIndex,top_list in enumerate(decisionRegionTracker):
@@ -113,14 +113,14 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
     for index,b in enumerate(listOfBanditSims):
         clusterSizes = listOfClusterSizes[index]
 
-        #Ensure this bandit sim had clustered arm scheme 
+        #Ensure this bandit sim had clustered arm scheme
         if (len(b.paramDict["arm scheme"]) > 2):
             if (b.paramDict["arm scheme"][1].startswith("clustered") == False):
                 continue
 
         decisionRegionTracker = b.decisionRegionTracker
         for algIndex,top_list in enumerate(decisionRegionTracker):
-            if (b.paramDict["algorithms"][algIndex].endswith("TS") == False):
+            if (b.paramDict["algorithms"][algIndex].startswith("MA-TS") == False):
                 #only plot TS results
                 continue
             #create a list of length= number of clusters
@@ -129,6 +129,7 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
             for _ in range(len(clusterSizes)):
                 tracker.append([])
             #zip together all trials together
+            frac = (1/float(b.paramDict["num arms"]))
             for i,trial in enumerate(top_list):
                 #each on of these are the results of one trial
                 clusterId = 0
@@ -144,10 +145,10 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
                     if (i == 0):
                         #take jth element of list and make a horizon-length list of weights
                         #print "Trial Results",trial
-                        tracker[clusterId] = np.array([e[j] for e in trial])
+                        tracker[clusterId] = np.array([(e[j]/(b.paramDict["num arms"])) for e in trial])
                     else:
                         #print "Trial Results",trial
-                        tracker[clusterId] = tracker[clusterId] + np.array([e[j] for e in trial])
+                        tracker[clusterId] = tracker[clusterId] + np.array([(e[j]/(b.paramDict["num arms"])) for e in trial])
             for i in range(len(clusterSizes)):
                 #normalize tracker over the number of trials
                 tracker[i] = tracker[i]
