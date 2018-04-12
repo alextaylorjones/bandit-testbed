@@ -14,15 +14,15 @@ from armModel import getSuccessProb as rectSuccessProb
 
 import numpy as np
 
-num_rects = 8
+num_rects = 40
 rects = []
 fig = plt.figure()
 ax = fig.gca(projection='3d')
 
 # Make data.
-X = np.arange(-5, 5, 0.2)
+X = np.arange(-3, 3, 0.02)
 xlen = len(X)
-Y = np.arange(-5, 5, 0.2)
+Y = np.arange(-3, 3, 0.02)
 ylen = len(Y)
 assert(len(X)==len(Y))
 
@@ -59,10 +59,10 @@ Zmax = np.copy(Zdict[0])
 for key in Zdict.keys():
     zs = np.array([rectSuccessProb((x,y),rects[key]) for x,y in zip(np.ravel(X),np.ravel(Y))])
     Zs = zs.reshape(X.shape)
-    surf = ax.plot_surface(X, Y, Zs, facecolor=colortuple[key], linewidth=0,alpha=0.6)
+    #surf = ax.plot_surface(X, Y, Zs, facecolor=colortuple[key], linewidth=0,alpha=0.6)
     #update max
     print "OLD Zmax",Zmax
-    Zmax = np.maximum(Zdict[key],Zmax)
+    Zmax = np.maximum(Zs,Zmax)
     print "New ZMax",Zmax
 
 
@@ -83,6 +83,10 @@ ax.w_zaxis.set_major_locator(LinearLocator(6))
 
 fig = plt.figure()
 ax = fig.gca(projection='3d')
-ax.plot_wireframe(X,Y,Zmax)
+ax.plot_surface(X,Y,Zmax,cmap=cm.coolwarm)
+ax.set_zlabel("Maximum Success Probability")
+ax.set_ylabel("Latent Dimension 1")
+ax.set_xlabel("Latent Dimension 2")
+
 
 plt.show()
