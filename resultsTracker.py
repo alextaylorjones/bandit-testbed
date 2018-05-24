@@ -115,10 +115,11 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
 
         #Ensure this bandit sim had clustered arm scheme
         if (len(b.paramDict["arm scheme"]) > 2):
-            if (b.paramDict["arm scheme"][1].startswith("clustered") == False):
+            if (b.paramDict["arm scheme"][1].startswith("clustered") == False or b.paramDict["arm scheme"][1].startswith("well-spaced") == False):
                 continue
 
         decisionRegionTracker = b.decisionRegionTracker
+        print "actually going to plot results"
         for algIndex,top_list in enumerate(decisionRegionTracker):
             if (b.paramDict["algorithms"][algIndex].startswith("MA-TS") == False):
                 #only plot TS results
@@ -140,20 +141,20 @@ def plotClusterPosteriors(listOfBanditSims,listOfClusterSizes,paramText):
                     if (clusterCount > clusterSizes[clusterId]):
                         clusterId = clusterId + 1
                         clusterCount = 1
-
+                    print "The weight of cluster is",trial
                     #horizon-length tracker list hasnt been created
                     if (i == 0):
                         #take jth element of list and make a horizon-length list of weights
                         #print "Trial Results",trial
-                        tracker[clusterId] = np.array([(e[j]/(b.paramDict["num arms"])) for e in trial])
+                        tracker[clusterId] = np.array([e[j] for e in trial])
                     else:
                         #print "Trial Results",trial
-                        tracker[clusterId] = tracker[clusterId] + np.array([(e[j]/(b.paramDict["num arms"])) for e in trial])
+                        tracker[clusterId] = tracker[clusterId] + np.array([e[j] for e in trial])
             for i in range(len(clusterSizes)):
                 #normalize tracker over the number of trials
                 tracker[i] = tracker[i]
                 #label with current algorithm and cluster ID
-                curLabel = "cluster " + str(i) + "" + b.paramDict["algorithms"][algIndex]
+                curLabel = "cluster " + str(i) + " " + b.paramDict["algorithms"][algIndex]
                 #plot
                 plt.plot(range(len(tracker[i])),tracker[i],label=curLabel)
 

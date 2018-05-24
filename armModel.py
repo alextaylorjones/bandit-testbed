@@ -175,7 +175,6 @@ class TeamTaskModel:
                 if (maxSuccessRate <= successRate):
                     optTeam = i
                     maxSuccessRate = successRate
-                #print "Success rate is",successRate
                 self.expSuccessRates.append(successRate)
 
             #sanity (some team has non-zero success rate

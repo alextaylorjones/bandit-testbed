@@ -3,10 +3,12 @@ from armModel import TeamTaskModel, NaiveArmModel
 from resultsTracker import *
 import numpy as np
 from threading  import Thread
+from rectVisualize import visualizeRects
 import math
 
 DEBUG = True
-EPSILON = 0.05
+EPSILON = 0.025
+PRINT_RECTS = True
 
 class BanditSimulator:#(Thread):
     paramDict = {}
@@ -59,7 +61,6 @@ class BanditSimulator:#(Thread):
         #select team locations, task and mapping
         teams = []
 
-
         if (armScheme[0] == "random"):
             if (armScheme[1] == None):
                 for _ in range(numArms):
@@ -72,28 +73,36 @@ class BanditSimulator:#(Thread):
                 #note: currently random choice over all potential models
                 ttm.selectTrueModel()
             elif (armScheme[1] == "well-spaced"):
+                numBuckets = armScheme[2]
+                assert(numArms % numBuckets == 0)
+
                 #select true model
                 ttm.selectTrueModel()
+                orderedTeams = []
 
                 #randomly select teams until we fill each mean bucket
-                meanBuckets = [None for _ in range(numArms)]
-                filledBuckets = 0
-                width = 1.0/numArms
-                while (filledBuckets < len(meanBuckets)):
+                filledBuckets = [0 for _ in range(numBuckets)]
+                width = 1.0/numBuckets
+                MAX_SUCCESS = 0.95
+                while (sum(filledBuckets) < (numArms)):
                     #generate random team
                     team = np.random.uniform(low=-1.0,high = 1.0,size=(teamSize,skillDim))
 
                     #see if bucket is filled
                     m = ttm.getTrueSuccessRate(team)
+                    if (m <= 0.01 or m > MAX_SUCCESS):
+                        continue
                     bucketID = int(math.floor(m / width))-1
-                    if (meanBuckets[bucketID] == None):
-                        filledBuckets = filledBuckets + 1
-                        if (DEBUG):
-                            print "Filling ",filledBuckets, " out of ",len(meanBuckets), "buckets"
+                    print "Filling bucket", bucketID
+                    if (filledBuckets[bucketID] < (numArms/numBuckets)):
+                        filledBuckets[bucketID] = filledBuckets[bucketID] + 1
                         #fill bucket if not team in bucket
-                        meanBuckets[bucketID] = team
+                        orderedTeams.append((team,m))
+                        print "Team added with success rate", m
 
-                ttm.addTeamSkills(meanBuckets)
+                orderedTeams = sorted(orderedTeams,key=lambda x:x[1],reverse=True)
+                print "All teams",orderedTeams
+                ttm.addTeamSkills([team[0] for team in orderedTeams])
 
             elif (armScheme[1] == "clustered"):
 
@@ -106,7 +115,7 @@ class BanditSimulator:#(Thread):
                 #randomly select teams until we fill each mean bucket
                 meanBuckets = [None for _ in range(numClusters)]
                 filledBuckets = 0
-                MAX_SUCCESS = 0.9
+                MAX_SUCCESS = 0.95
                 width = float(MAX_SUCCESS/numClusters)
                 while (filledBuckets < len(meanBuckets)):
                     #generate random team
@@ -165,7 +174,6 @@ class BanditSimulator:#(Thread):
 
             mapping = np.eye(skillDim,latentDim)
             task = np.zeros(latentDim)
-            teams= []
             #arrange all teams along single dimension
             if (armScheme[1] == "single-dim"):
                 armMeans = np.arange(0.0,1.0 + 1.0/numArms, 1.0/numArms)
@@ -258,6 +266,25 @@ class BanditSimulator:#(Thread):
             print armScheme
             assert(False)
 
+        if (PRINT_RECTS):
+            trueMapping = ttm.trueModelSpecs["map"]
+            teams = ttm.teamSkills
+            toDrawRects = []
+            for team in teams:
+                latentRect = np.dot(team,trueMapping)
+                lBounds = np.min(latentRect,0)
+                uBounds = np.max(latentRect,0)
+                assert(paramDict["latent dimension"] == 2)
+                assert(len(lBounds) == paramDict["latent dimension"])
+                assert(len(uBounds) == paramDict["latent dimension"])
+                #convert team to 4-tuple in latent space
+                print "Bounds for team"
+                print lBounds,uBounds
+                teamTup = (lBounds[0],uBounds[0],lBounds[1],uBounds[1])
+                toDrawRects.append(teamTup)
+
+            print "Draw team boxes",toDrawRects
+            visualizeRects(toDrawRects)
 
 
         if (len(armScheme) > 2):
@@ -354,27 +381,27 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(730)
+    np.random.seed(731)
 
     armScheme = ("random",None)
     #armScheme = ("space-util-example","all-dim")
     #alg list
-    algorithms = ["naive-TS","MA-TS","UCB1"]
+    algorithms = ["naive-TS","MA-TS"]#,"UCB1"]
 
     #params for MA-TS
     latentDim = 2
     skillDim = 4
-    numMaps = 250
-    ttmResolution = 0.1
+    numMaps = 100
+    ttmResolution = 0.05
     rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
-    ntsResolution = 0.05
+    ntsResolution = 0.025
 
     #general parameters
-    trials = 5
-    horizon = 150
-    numArms = 18
+    trials = 3
+    horizon = 100
+    numArms = 4
     teamSize = 2
 
     """
@@ -399,12 +426,12 @@ if __name__ == "__main__":
     """
     banditSims = []
 
-    paramDict["arm scheme"] = ("random","clustered",6)
+    paramDict["arm scheme"] = ("random","clustered",2)
     b = BanditSimulator(paramDict)
     b.run()
     banditSims.append(b)
 
-    #paramDict["arm scheme"] = ("random","clustered",8)
+    #paramDict["arm scheme"] = ("random","clustered",4)
     #banditSims.append(BanditSimulator(paramDict))
     #banditSims[-1].run()
 
@@ -429,7 +456,7 @@ if __name__ == "__main__":
 
         #If clustering was applied, show the posterior mass of the clusters
         if (len(b.paramDict["arm scheme"]) >= 3):
-            if (b.paramDict["arm scheme"][1].startswith("clustered")):
+            if (b.paramDict["arm scheme"][1].startswith("clustered") or b.paramDict["arm scheme"][1].startswith("well-spaced")):
                 numClusters = b.paramDict["arm scheme"][2]
                 numArms = b.paramDict["num arms"]
                 if (numArms % numClusters > 0):
@@ -441,8 +468,9 @@ if __name__ == "__main__":
                 clusterSizes.append(numClusters*[numArms/numClusters])
 
 
-    print "Before calling plot clusters"
-    plotClusterPosteriors(clusteredInstances,clusterSizes,str(b.paramDict))
+
+        print "Before calling plot clusters"
+        plotClusterPosteriors(clusteredInstances,clusterSizes,str(b.paramDict))
 
         #if (b.paramDict["latent dimension"] == 2) :
         #    plotTeamBoxes(b)
