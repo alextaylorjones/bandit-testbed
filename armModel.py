@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 DEBUG = True
-EPSILON = 0.000
+EPSILON = 0.005
 
 class TeamTaskModel:
 
@@ -171,6 +171,8 @@ class TeamTaskModel:
                     else:
                         #multiply success rate by fractional overlap in dimension d
                         successRate = successRate * min((delta /( upperBoxBounds[d] - lowerBoxBounds[d])),1.0)
+                if (successRate == 1.0):
+                    successRate = 1.0 - EPSILON
 
                 if (maxSuccessRate <= successRate):
                     optTeam = i
@@ -342,6 +344,8 @@ def getSuccessProb(taskPt,boxCoordinates):
             continue
         else:
             prob = prob * (mx-taskPt[i])/d
+    if (prob == 1.0):
+        prob = 1.0 - EPSILON
     return prob
 
 class NaiveArmModel:

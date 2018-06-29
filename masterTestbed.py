@@ -9,6 +9,8 @@ import math
 DEBUG = True
 EPSILON = 0.025
 PRINT_RECTS = True
+PLOT = True
+PLOT_FREQ = 1
 
 class BanditSimulator:#(Thread):
     paramDict = {}
@@ -266,6 +268,8 @@ class BanditSimulator:#(Thread):
             print armScheme
             assert(False)
 
+
+        """
         if (PRINT_RECTS):
             trueMapping = ttm.trueModelSpecs["map"]
             teams = ttm.teamSkills
@@ -285,6 +289,7 @@ class BanditSimulator:#(Thread):
 
             print "Draw team boxes",toDrawRects
             visualizeRects(toDrawRects)
+        """
 
 
         if (len(armScheme) > 2):
@@ -349,8 +354,6 @@ class BanditSimulator:#(Thread):
             for t in range(horizon):
                 print "(trial ",cur_trial,": time ",t,")"
 
-
-
                 for i,a in enumerate(algorithms):
                     chosenArm = (bp[a]).chooseNextArm(t)
                     if (DEBUG):
@@ -362,6 +365,14 @@ class BanditSimulator:#(Thread):
                     """ Calculate the weight of decision region of optimal """
                     #take the results for arm a, taking the latest trial list
                     results[i][-1].append((chosenArm,rewards[chosenArm][t]))
+
+                if (PLOT and t % PLOT_FREQ == 0):
+                    #Get rects mapped using true mapping
+                    #Get marginal posterior over true mapping
+                    #Get task location
+
+                    rectVisualize(givenRects=,givenTaskLocation=,posterior=,iterationCount=t)
+
 
         optAvg = max(ttm.successMeans)
         optIndex = np.argmax(ttm.successMeans)
@@ -399,8 +410,8 @@ if __name__ == "__main__":
     ntsResolution = 0.025
 
     #general parameters
-    trials = 3
-    horizon = 100
+    trials = 10
+    horizon = 50
     numArms = 4
     teamSize = 2
 

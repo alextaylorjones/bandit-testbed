@@ -30,15 +30,24 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
 
         cum_reward = np.cumsum(avg_list)
         opt_reward = [optMean*i for i in range(len(cum_reward))]
-        plt.plot(range(len(cum_reward)),opt_reward - cum_reward,label=labels[algIndex])
+        label=labels[algIndex]
+        if (label.startswith("MA-TS")):
+            templabel = "Common Parameters"
+        if (label.startswith("naive-TS")):
+            templabel = "Independent Parameters"
+
+        plt.plot(range(len(cum_reward)),opt_reward - cum_reward,label=templabel)
 
     plt.title("Empirical Expected Regret")
-    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + "\n"+paramText,horizontalalignment = 'right')
-    plt.legend()
+    plt.xlabel("Time")
+    #plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) + "\n"+paramText,horizontalalignment = 'right')
+    plt.legend(fontsize=16)
 
 
     plt.figure(2)
-    plt.title("Arm Selection Counts (assuming unique optimal)")
+    plt.xlabel("Time",fontsize=20)
+    plt.ylabel("Optimal Team Assignment Count",fontsize=20)
+
     for algIndex,top_list in enumerate(rawResults):
 
         """
@@ -57,19 +66,25 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
             else:
                 for i,(index,reward) in enumerate(trial):
                     if (index == optIndex):
-                        optCountList[i] = optCountList[i] + 1
+                        optCountList[i] = optCountList[i] + (1.0/float(len(top_list)))
 
         optCountListCum = np.cumsum(np.array(optCountList))
+        label=labels[algIndex]
+        if (label.startswith("MA-TS")):
+            templabel = "Common Parameters"
+        if (label.startswith("naive-TS")):
+            templabel = "Independent Parameters"
 
-        plt.plot(range(len(optCountListCum)),optCountListCum,label=labels[algIndex])
+
+        
+        plt.plot(range(len(optCountListCum)),optCountListCum,label=templabel)
 
 
 
-    plt.legend()
-    plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+    plt.legend(fontsize=20)
+    #plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
 
-    """
-    Show decision region weight evolution
+    #Show decision region weight evolution
     for algIndex,top_list in enumerate(decisionRegionTracker):
         if (labels[algIndex] == "MA-TS"):
             plt.figure(3+algIndex)
@@ -95,10 +110,9 @@ def plotRegret(rawResults,decisionRegionTracker,paramText,labels,optMean,optInde
                 plt.plot(range(len(tracker[j])),tracker[j],label=curLabel)
 
             plt.title("Decision Region Post. Dist Mass")
-            plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
+            #plt.figtext(0.99,0.01,"armmeans = " + str(armMeans) +"\n"+ paramText,horizontalalignment = 'right')
             plt.legend()
 
-    """
 
     """
     Show all plots
