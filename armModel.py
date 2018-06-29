@@ -344,8 +344,10 @@ def getSuccessProb(taskPt,boxCoordinates):
             continue
         else:
             prob = prob * (mx-taskPt[i])/d
-    if (prob == 1.0):
+    if (prob > 1.0-EPSILON):
         prob = 1.0 - EPSILON
+    if (prob < EPSILON):
+        prob = EPSILON
     return prob
 
 class NaiveArmModel:

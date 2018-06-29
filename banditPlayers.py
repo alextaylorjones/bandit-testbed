@@ -281,13 +281,13 @@ class BanditPlayer:
         cumWeight = 0.0
         for x,M,w in self.armModel.paramSpace:
             if (np.array_equal(mapping,M)):
-                continue
-            else:
                 cumWeight = cumWeight + w
                 posterior.append([x,w])
+            else:
+                continue
 
         if (cumWeight <= 0.0):
-            print "STOP! No weights recorded"
+                print "STOP! No weights recorded"
         else:
             margPosterior = [(pos[0],pos[1]/cumWeight) for pos in posterior]
 

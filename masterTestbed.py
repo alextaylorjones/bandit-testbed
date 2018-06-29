@@ -353,11 +353,14 @@ class BanditSimulator:#(Thread):
 
             for t in range(horizon):
                 print "(trial ",cur_trial,": time ",t,")"
-
+                matsTeam = None
                 for i,a in enumerate(algorithms):
                     chosenArm = (bp[a]).chooseNextArm(t)
                     if (DEBUG):
                         print "Choosing arm ",chosenArm," for alg ",a
+                    #record chosen team
+                    if (a.startswith("MA-TS")):
+                        matsTeam = chosenArm
                     #update model and track arm model weight for this iteration
                     track = (bp[a]).updateModel(chosenArm,rewards[chosenArm][t])
                     tracker[i][-1].append(track)
@@ -378,7 +381,7 @@ class BanditSimulator:#(Thread):
                     #Get task location
                     taskLocation = bp["MA-TS"].getTaskLocation()
 
-                    visualizeRects(givenRects=rects,givenTaskLocation=taskLocation,posterior=posterior,iterationCount=t)
+                    visualizeRects(givenRects=rects,givenTaskLocation=taskLocation,posterior=posterior,iterationCount=t,trialCount=cur_trial,chosenTeam=matsTeam)
 
 
         optAvg = max(ttm.successMeans)
@@ -399,7 +402,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(731)
+    np.random.seed(736)
 
     armScheme = ("random",None)
     #armScheme = ("space-util-example","all-dim")
@@ -419,7 +422,7 @@ if __name__ == "__main__":
     #general parameters
     trials = 10
     horizon = 50
-    numArms = 4
+    numArms = 2
     teamSize = 2
 
     """

@@ -11,14 +11,15 @@ from matplotlib.collections import PatchCollection
 DEFAULT_FONT_SZ = 16
 
 #input - a list of 4-tuples
-def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterationCount=None):
+def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterationCount=None,trialCount = None,chosenTeam=None):
     #constants
+
     CLUSTER_RANDOM = False
     CLUSTER_EXAMPLE = 0 #set >0 for specific example
     NUM_RECTS = 2
     EPSILON = 0.333
-    XMIN,YMIN = (-3,-3)
-    XMAX,YMAX = (3,3)
+    XMIN,YMIN = (-1,-1)
+    XMAX,YMAX = (1,1)
     num_clusters = 1
     
     num_rects = -1
@@ -138,83 +139,83 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
     Plot probability surface
     """ 
 
-    fig = plt.figure(figsize=plt.figaspect(1.0/num_rects))
-    for i,rect in enumerate(rects):
+    skip = False
 
-        print "Rect", i, " = ",rect
-        zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
+    if (iterationCount != None and trialCount != None):
+        if (iterationCount > 0 or trialCount > 0):
+            skip = True
 
-        Zs = zs.reshape(X.shape)
+    if (skip == False):
 
-        ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
-        ax.plot_surface(X,Y,Zs,linewidth=0.1,color=colortuple[i])
+        fig = plt.figure(figsize=plt.figaspect(1.0/num_rects))
+        for i,rect in enumerate(rects):
 
-        ax.set_title("Probability of Success over Task Points for Team %i" % (i))
-        ax.set_zlabel("Success Probability",fontsize=DEFAULT_FONT_SZ)
-        ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-        ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+            print "Rect", i, " = ",rect
+            zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
 
+            Zs = zs.reshape(X.shape)
 
+            ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
+            ax.plot_surface(X,Y,Zs,linewidth=0.1,color=colortuple[i])
 
-        ax.view_init(60,35)
-
-        #update max
-        print "Zs",Zs
-
-
-
+            ax.set_title("Probability of Success over Task Points for Team %i" % (i))
+            ax.set_zlabel("Success Probability",fontsize=DEFAULT_FONT_SZ)
+            ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+            ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
             
-    # Plot the surface with face colors taken from the array we made.
+            ax.view_init(60,35)
 
-
-    # Customize the z axis.
-    ax.set_zlim(0, 1)
-    #plt.title("Success Probability vs Task Location - All Teams",fontsize=16)
-    ax.set_zlabel("Success Probability",fontsize=DEFAULT_FONT_SZ)
-    ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-    ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
-
-    ax.w_zaxis.set_major_locator(LinearLocator(6))
+            plt.savefig('./posterior/prob-surfaces')
+                
 
     """ 
     Plot divergence surface for each rect
 
     """
     
-    fig = plt.figure(figsize=plt.figaspect(1.0/num_rects))
+    skip = False
 
-    for i,rect in enumerate(rects):
-       
+    if (iterationCount != None and trialCount != None):
+        if (iterationCount > 0 or trialCount > 0):
+            skip = True
 
-        zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
-        Zs = zs.reshape(X.shape)
+    if (skip == False):
+        fig = plt.figure(figsize=plt.figaspect(1.0/num_rects))
 
-        successProb = rectSuccessProb(taskLocation,rects[i])
-        failProb = 1.0 - successProb
-        print "\n\n***Sucess prob for team ", i, " = ",successProb
-        divMat = np.empty((xlen,ylen))
+        for i,rect in enumerate(rects):
+           
+
+            zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
+            Zs = zs.reshape(X.shape)
+
+            successProb = rectSuccessProb(taskLocation,rects[i])
+            failProb = 1.0 - successProb
+            print "\n\n***Sucess prob for team ", i, " = ",successProb
+            divMat = np.empty((xlen,ylen))
 
 
-        for x in range(xlen):
-            for y in range(ylen):
-                #if ((x+y) % 154 == 0):
-                #    print "At point",(xPts[x],yPts[y]),"success of team ",i,"(",rects[i],") is ",Zs[x][y]
+            for x in range(xlen):
+                for y in range(ylen):
+                    #if ((x+y) % 154 == 0):
+                    #    print "At point",(xPts[x],yPts[y]),"success of team ",i,"(",rects[i],") is ",Zs[x][y]
 
-                divMat[x][y] = successProb*math.log(successProb/Zs[x][y]) + failProb*math.log(failProb/(1.0 -Zs[x][y]))
+                    divMat[x][y] = successProb*math.log(successProb/Zs[x][y]) + failProb*math.log(failProb/(1.0 -Zs[x][y]))
 
-                
-                if (i == 1 and abs(xPts[x] + 2.0) < 0.05 and abs(yPts[y] + 0.5) < 0.05):
-                    print "At point",(xPts[x],yPts[y]),"success probability is",Zs[x][y]," and divergence is",divMat[x][y]
+                    
+                    if (i == 1 and abs(xPts[x] + 2.0) < 0.05 and abs(yPts[y] + 0.5) < 0.05):
+                        print "At point",(xPts[x],yPts[y]),"success probability is",Zs[x][y]," and divergence is",divMat[x][y]
 
-                #print "GOT HERE for rect",rects[i], "on task ",taskLocation, ". test val idx is ",x,y,"test val is",(xPts[x],yPts[y]),"div is",divMat[x][y]
+                    #print "GOT HERE for rect",rects[i], "on task ",taskLocation, ". test val idx is ",x,y,"test val is",(xPts[x],yPts[y]),"div is",divMat[x][y]
 
-        print "Div Mat",divMat
+            print "Div Mat",divMat
 
-        ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
-        ax.plot_surface(X,Y,divMat,color=colortuple[i])
-        ax.set_title("Divergence for Team %i" % (i))
-        ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-        ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+            ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
+            ax.plot_surface(X,Y,divMat,color=colortuple[i])
+            ax.set_title("Divergence for Team %i" % (i))
+            ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+            ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+            plt.tight_layout()
+            fig.savefig('./posterior/divergence-surfaces')
 
 
 
@@ -260,45 +261,123 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
     """
     Plot posterior
     """
+    if (posterior != None and iterationCount != None):
+        fig,ax = plt.subplots()
+        #ax.plot_surface(X,Y,Zmax,cmap=cm.coolwarm)
+        xs = [p[0][0] for p in posterior]
+        ys = [p[0][1] for p in posterior]
+        ws = [p[1] for p in posterior]
+
+        sc = ax.scatter(xs,ys,cmap='hot',c=ws)
+        plt.colorbar(sc)
+        ax.set_xlim(XMIN,XMAX)
+        ax.set_ylim(YMIN,YMAX)
+        ax.set_title("Marginal (t = %i, chosen team =%i) Posterior Probability" % (iterationCount,chosenTeam))
+        ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+        ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+        fig.savefig('./posterior/trial%i-t%i' % (trialCount,iterationCount))
+
+
+        #plt.title("Success Probability vs Task Location - Maximum over All Teams",fontsize=16)
+ 
+    skip = False
+
+    if (iterationCount != None and trialCount != None):
+        if (iterationCount > 0 or trialCount > 0):
+            skip = True
+
+    if (skip == False):
+        fig,ax = plt.subplots()
+        #plt.title("Latent Representation of %i teams in %i clusters" %(num_rects,num_clusters))
+        #ax.grid(zorder=0)
+        drawRects = []
+
+        for i,rect in enumerate(rects):
+            #rect = rects[i]
+            rectDraw = mpatches.Rectangle( (rect[0],rect[2]),(rect[1]-rect[0]), (rect[3] - rect[2]),facecolor=colortuple[i],alpha=0.6)
+            print "Plotting rects",rectDraw
+            ax.add_patch(rectDraw)
+            #drawRects.append(rectDraw)
+
+        ax.add_patch(mpatches.Circle(taskLocation,0.02,color='k'))
+
+        #colors = np.random.uniform(0,1,(len(drawRects)))
+        #collection = PatchCollection(drawRects, cmap=plt.cm.hsv, alpha=0.6)
+        #collection = PatchCollection(drawRects)#, cmap=plt.cm.coolwarm, alpha=0.6)
+        #collection.set_array(np.array([0.0,0.3,0.8]))
+
+        #ax.add_collection(collection,)
+        ax.set_xlim(XMIN,XMAX)
+        ax.set_ylim(YMIN,YMAX)
+        ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+        ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+        plt.savefig('./posterior/latent-team-loc')
+
 
     """
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.plot_surface(X,Y,Zmax,cmap=cm.coolwarm)
-    ax.set_zlabel("Maximum Success Probability",fontsize=DEFAULT_FONT_SZ)
-    ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-    ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
-    #plt.title("Success Probability vs Task Location - Maximum over All Teams",fontsize=16)
+    Plot hard suboptimal regions
+
     """
+    skip = False
 
-    fig,ax = plt.subplots()
-    #plt.title("Latent Representation of %i teams in %i clusters" %(num_rects,num_clusters))
-    #ax.grid(zorder=0)
-    drawRects = []
+    if (iterationCount != None and trialCount != None):
+        if (iterationCount > 0 or trialCount > 0):
+            skip = True
 
-    for i,rect in enumerate(rects):
-        #rect = rects[i]
-        rectDraw = mpatches.Rectangle( (rect[0],rect[2]),(rect[1]-rect[0]), (rect[3] - rect[2]),facecolor=colortuple[i],alpha=0.6)
-        print "Plotting rects",rectDraw
-        ax.add_patch(rectDraw)
-        #drawRects.append(rectDraw)
+    if (skip == False):
+        #Get optimal team
+        maxSuccess = 0.0
+        optTeam = -1
+        for i,rect in enumerate(rects):
+            s
 
-    ax.add_patch(mpatches.Circle(taskLocation,0.02,color='k'))
+        #sanity check
+        assert(optTeam >= 0)
 
-    #colors = np.random.uniform(0,1,(len(drawRects)))
-    #collection = PatchCollection(drawRects, cmap=plt.cm.hsv, alpha=0.6)
-    #collection = PatchCollection(drawRects)#, cmap=plt.cm.coolwarm, alpha=0.6)
-    #collection.set_array(np.array([0.0,0.3,0.8]))
+        #Find all models in which optimal arm is fixed close to its true distribution
+        for i,x in enumerate(xPts):
+            for j,y in enumerate(yPts):
+                if 
+        for i,rect in enumerate(rects):
+           
 
-    #ax.add_collection(collection,)
-    ax.set_xlim(XMIN,XMAX)
-    ax.set_ylim(YMIN,YMAX)
-    ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-    ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+            zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
+            Zs = zs.reshape(X.shape)
+
+            successProb = rectSuccessProb(taskLocation,rects[i])
+            failProb = 1.0 - successProb
+            print "\n\n***Sucess prob for team ", i, " = ",successProb
+            divMat = np.empty((xlen,ylen))
+
+
+            for x in range(xlen):
+                for y in range(ylen):
+                    #if ((x+y) % 154 == 0):
+                    #    print "At point",(xPts[x],yPts[y]),"success of team ",i,"(",rects[i],") is ",Zs[x][y]
+
+                    divMat[x][y] = successProb*math.log(successProb/Zs[x][y]) + failProb*math.log(failProb/(1.0 -Zs[x][y]))
+
+                    
+                    if (i == 1 and abs(xPts[x] + 2.0) < 0.05 and abs(yPts[y] + 0.5) < 0.05):
+                        print "At point",(xPts[x],yPts[y]),"success probability is",Zs[x][y]," and divergence is",divMat[x][y]
+
+                    #print "GOT HERE for rect",rects[i], "on task ",taskLocation, ". test val idx is ",x,y,"test val is",(xPts[x],yPts[y]),"div is",divMat[x][y]
+
+            print "Div Mat",divMat
+
+            ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
+            ax.plot_surface(X,Y,divMat,color=colortuple[i])
+            ax.set_title("Divergence for Team %i" % (i))
+            ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+            ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
+            plt.tight_layout()
+            fig.savefig('./posterior/divergence-surfaces')
 
 
 
-    plt.show()
+    
+    plt.close()
+    #plt.show()
 
 if (__name__ == "__main__"):
     print "Visulizing all team latent boxes"
