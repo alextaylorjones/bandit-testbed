@@ -367,11 +367,18 @@ class BanditSimulator:#(Thread):
                     results[i][-1].append((chosenArm,rewards[chosenArm][t]))
 
                 if (PLOT and t % PLOT_FREQ == 0):
+                    if (latentDim != 2):
+                        print "\n\nCannot plot rect visualizer"
+                        exit()
+                    
                     #Get rects mapped using true mapping
+                    rects = bp["MA-TS"].getLatentRects()
                     #Get marginal posterior over true mapping
+                    posterior = bp["MA-TS"].getTrueMappingPosterior()
                     #Get task location
+                    taskLocation = bp["MA-TS"].getTaskLocation()
 
-                    rectVisualize(givenRects=,givenTaskLocation=,posterior=,iterationCount=t)
+                    visualizeRects(givenRects=rects,givenTaskLocation=taskLocation,posterior=posterior,iterationCount=t)
 
 
         optAvg = max(ttm.successMeans)

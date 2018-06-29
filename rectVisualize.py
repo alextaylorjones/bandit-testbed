@@ -220,7 +220,6 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
 
     """
     Plot update ratio
-    """
  
     fig = plt.figure(figsize=plt.figaspect(2.0/num_rects))
 
@@ -255,6 +254,8 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
 
 
     plt.tight_layout()
+
+    """
 
     """
     Plot posterior

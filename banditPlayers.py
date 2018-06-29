@@ -238,3 +238,66 @@ class BanditPlayer:
             print "ERROR: No policy with name ", self.name
             assert(0)
         return []
+
+
+    """ 
+    Tools for plotting, MA-TS only
+    """
+    #Get list of xmin,xmax,ymin,ymax rectangles which have been mapped into latent space
+    def getLatentRects(self):
+        assert(self.name == "MA-TS")
+        print "(Plot assistant) Getting latent rects"
+        mapping = self.armModel.trueModelSpecs["map"]
+
+        teamSkills = self.armModel.teamSkills
+        rects = []
+
+        for i,team in enumerate(teamSkills):
+            print "Team ",i,"has skills ",team
+            latentImage = np.dot(team,mapping)
+
+            #find boundaries of box
+            lowerBoxBounds = np.min(latentImage,0)
+            upperBoxBounds = np.max(latentImage,0)
+            xmin,ymin = lowerBoxBounds
+            xmax,ymax = upperBoxBounds
+            rect = [xmin,xmax,ymin,ymax]
+            print "Latent Embedding of team is ",rect
+            rects.append(rect)
+     
+
+
+        return rects
+
+    #Get matrix of post probabilities of our models (marginalized over true mapping)
+    def getTrueMappingPosterior(self):
+        assert(self.name == "MA-TS")
+        print "(Plot assistant) Getting marginal location posterior"
+
+        mapping = self.armModel.trueModelSpecs["map"]
+        
+ 
+        posterior = []
+        cumWeight = 0.0
+        for x,M,w in self.armModel.paramSpace:
+            if (np.array_equal(mapping,M)):
+                continue
+            else:
+                cumWeight = cumWeight + w
+                posterior.append([x,w])
+
+        if (cumWeight <= 0.0):
+            print "STOP! No weights recorded"
+        else:
+            margPosterior = [(pos[0],pos[1]/cumWeight) for pos in posterior]
+
+        print "Marginal Posterior calculated (size ",len(margPosterior)
+        return margPosterior
+
+    #Get task location in latent space
+    def getTaskLocation(self):
+        assert(self.name == "MA-TS")
+
+        taskLoc = self.armModel.trueModelSpecs["task"]
+        print "(Plot assistant) Task location is",taskLoc
+        return taskLoc
