@@ -402,7 +402,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(736)
+    np.random.seed(736134)
 
     armScheme = ("random",None)
     #armScheme = ("space-util-example","all-dim")
@@ -413,16 +413,16 @@ if __name__ == "__main__":
     latentDim = 2
     skillDim = 4
     numMaps = 100
-    ttmResolution = 0.05
+    ttmResolution = 0.02
     rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
     ntsResolution = 0.025
 
     #general parameters
-    trials = 10
+    trials = 3
     horizon = 50
-    numArms = 2
+    numArms = 3
     teamSize = 2
 
     """
@@ -447,7 +447,7 @@ if __name__ == "__main__":
     """
     banditSims = []
 
-    paramDict["arm scheme"] = ("random","clustered",2)
+    paramDict["arm scheme"] = ("random","clustered",3)
     b = BanditSimulator(paramDict)
     b.run()
     banditSims.append(b)

@@ -165,7 +165,8 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
             
             ax.view_init(60,35)
 
-            plt.savefig('./posterior/prob-surfaces')
+        plt.savefig('./posterior/prob-surfaces')
+        plt.close()
                 
 
     """ 
@@ -180,7 +181,8 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
             skip = True
 
     if (skip == False):
-        fig = plt.figure(figsize=plt.figaspect(1.0/num_rects))
+        figDiv = plt.figure(figsize=plt.figaspect(1.0/num_rects))
+        figLoss = plt.figure(figsize=plt.figaspect(1.0/num_rects))
 
         for i,rect in enumerate(rects):
            
@@ -192,6 +194,7 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
             failProb = 1.0 - successProb
             print "\n\n***Sucess prob for team ", i, " = ",successProb
             divMat = np.empty((xlen,ylen))
+            lossMat = np.empty((xlen,ylen))
 
 
             for x in range(xlen):
@@ -200,6 +203,7 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
                     #    print "At point",(xPts[x],yPts[y]),"success of team ",i,"(",rects[i],") is ",Zs[x][y]
 
                     divMat[x][y] = successProb*math.log(successProb/Zs[x][y]) + failProb*math.log(failProb/(1.0 -Zs[x][y]))
+                    lossMat[x][y] = math.exp(-1.0*divMat[x][y])
 
                     
                     if (i == 1 and abs(xPts[x] + 2.0) < 0.05 and abs(yPts[y] + 0.5) < 0.05):
@@ -209,15 +213,24 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
 
             print "Div Mat",divMat
 
-            ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
+            #Divergence
+            ax = figDiv.add_subplot(1,num_rects,i+1,projection='3d')
             ax.plot_surface(X,Y,divMat,color=colortuple[i])
             ax.set_title("Divergence for Team %i" % (i))
             ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
             ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
-            plt.tight_layout()
-            fig.savefig('./posterior/divergence-surfaces')
+            
+            #Losses
+            ax = figLoss.add_subplot(1,num_rects,i+1,projection='3d')
+            ax.plot_surface(X,Y,lossMat,color=colortuple[i])
+            ax.set_title("Losses for Team %i" % (i))
+            ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
+            ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
 
-
+        figDiv.savefig('./posterior/divergence-surfaces')
+        figLoss.savefig('./posterior/loss-surfaces')
+        plt.close(figDiv)
+        plt.close(figLoss)
 
     """
     Plot update ratio
@@ -277,7 +290,7 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
         ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
         fig.savefig('./posterior/trial%i-t%i' % (trialCount,iterationCount))
 
-
+        plt.close(fig)
         #plt.title("Success Probability vs Task Location - Maximum over All Teams",fontsize=16)
  
     skip = False
@@ -312,71 +325,8 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
         ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
         ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
         plt.savefig('./posterior/latent-team-loc')
+        plt.close(fig)
 
-
-    """
-    Plot hard suboptimal regions
-
-    """
-    skip = False
-
-    if (iterationCount != None and trialCount != None):
-        if (iterationCount > 0 or trialCount > 0):
-            skip = True
-
-    if (skip == False):
-        #Get optimal team
-        maxSuccess = 0.0
-        optTeam = -1
-        for i,rect in enumerate(rects):
-            s
-
-        #sanity check
-        assert(optTeam >= 0)
-
-        #Find all models in which optimal arm is fixed close to its true distribution
-        for i,x in enumerate(xPts):
-            for j,y in enumerate(yPts):
-                if 
-        for i,rect in enumerate(rects):
-           
-
-            zs = np.array([rectSuccessProb((x,y),rects[i]) for x,y in zip(np.ravel(X),np.ravel(Y))])
-            Zs = zs.reshape(X.shape)
-
-            successProb = rectSuccessProb(taskLocation,rects[i])
-            failProb = 1.0 - successProb
-            print "\n\n***Sucess prob for team ", i, " = ",successProb
-            divMat = np.empty((xlen,ylen))
-
-
-            for x in range(xlen):
-                for y in range(ylen):
-                    #if ((x+y) % 154 == 0):
-                    #    print "At point",(xPts[x],yPts[y]),"success of team ",i,"(",rects[i],") is ",Zs[x][y]
-
-                    divMat[x][y] = successProb*math.log(successProb/Zs[x][y]) + failProb*math.log(failProb/(1.0 -Zs[x][y]))
-
-                    
-                    if (i == 1 and abs(xPts[x] + 2.0) < 0.05 and abs(yPts[y] + 0.5) < 0.05):
-                        print "At point",(xPts[x],yPts[y]),"success probability is",Zs[x][y]," and divergence is",divMat[x][y]
-
-                    #print "GOT HERE for rect",rects[i], "on task ",taskLocation, ". test val idx is ",x,y,"test val is",(xPts[x],yPts[y]),"div is",divMat[x][y]
-
-            print "Div Mat",divMat
-
-            ax = fig.add_subplot(1,num_rects,i+1,projection='3d')
-            ax.plot_surface(X,Y,divMat,color=colortuple[i])
-            ax.set_title("Divergence for Team %i" % (i))
-            ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
-            ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
-            plt.tight_layout()
-            fig.savefig('./posterior/divergence-surfaces')
-
-
-
-    
-    plt.close()
     #plt.show()
 
 if (__name__ == "__main__"):
