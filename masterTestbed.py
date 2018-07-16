@@ -4,6 +4,7 @@ from resultsTracker import *
 import numpy as np
 from threading  import Thread
 from rectVisualize import visualizeRects
+from plotRegretBounds import plotUpperRegretBound
 import math
 
 DEBUG = True
@@ -301,6 +302,10 @@ class BanditSimulator:#(Thread):
                     print "\n\n\n******\n Reweight decision regions for even first selection"
                 ttm.evenDecisionReweight()
 
+        """
+        Use Theorem to calculate upper bounds for regret at all times
+        """
+        plotUpperRegretBound(ttm,horizon)
 
         for cur_trial in range(trials):
             if (DEBUG):
