@@ -166,7 +166,7 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
             ax.view_init(60,35)
 
         plt.savefig('./posterior/prob-surfaces')
-        plt.close()
+        #plt.close()
                 
 
     """ 
@@ -229,8 +229,8 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
 
         figDiv.savefig('./posterior/divergence-surfaces')
         figLoss.savefig('./posterior/loss-surfaces')
-        plt.close(figDiv)
-        plt.close(figLoss)
+        #plt.close(figDiv)
+        #plt.close(figLoss)
 
     """
     Plot update ratio
@@ -290,7 +290,7 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
         ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
         fig.savefig('./posterior/trial%i-t%i' % (trialCount,iterationCount))
 
-        plt.close(fig)
+        #plt.close(fig)
         #plt.title("Success Probability vs Task Location - Maximum over All Teams",fontsize=16)
  
     skip = False
@@ -325,9 +325,9 @@ def visualizeRects(givenRects=None,givenTaskLocation=None,posterior=None,iterati
         ax.set_xlabel("Latent Dimension 1",fontsize=DEFAULT_FONT_SZ)
         ax.set_ylabel("Latent Dimension 2",fontsize=DEFAULT_FONT_SZ)
         plt.savefig('./posterior/latent-team-loc')
-        plt.close(fig)
+        #plt.close(fig)
 
-    #plt.show()
+    plt.show()
 
 if (__name__ == "__main__"):
     print "Visulizing all team latent boxes"

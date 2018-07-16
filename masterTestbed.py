@@ -10,7 +10,7 @@ DEBUG = True
 EPSILON = 0.025
 PRINT_RECTS = True
 PLOT = True
-PLOT_FREQ = 1
+PLOT_FREQ = 10
 
 class BanditSimulator:#(Thread):
     paramDict = {}
@@ -402,7 +402,7 @@ if __name__ == "__main__":
     print "Running master testbed for bandits"
 
     #seed
-    np.random.seed(736134)
+    np.random.seed(36134)
 
     armScheme = ("random",None)
     #armScheme = ("space-util-example","all-dim")
@@ -413,7 +413,7 @@ if __name__ == "__main__":
     latentDim = 2
     skillDim = 4
     numMaps = 100
-    ttmResolution = 0.02
+    ttmResolution = 0.05
     rotResolution = math.pi/2.0 #45 deg.
 
     #params for naive-TS
@@ -421,7 +421,7 @@ if __name__ == "__main__":
 
     #general parameters
     trials = 3
-    horizon = 50
+    horizon = 200
     numArms = 3
     teamSize = 2
 
