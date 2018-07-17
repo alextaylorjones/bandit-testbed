@@ -53,14 +53,14 @@ def plotUpperRegretBound(ttm,T):
         if (optTeam == maxIndex): #Psi
             weightPsi = weightPsi + weight
             numPsi = numPsi +1
-            divPsi = [(divPsi[j] + getDivBernoulli(allSuccessRates[i*numTeams + j],trueSuccessRates[j])) for j in range(numTeams)]
+            divPsi = [(divPsi[j] + getDivBernoulli(trueSuccessRates[j],allSuccessRates[i*numTeams + j])) for j in range(numTeams)]
 
             pPsi = pPsi + math.log(weight)
 
         else: #Phi
             weightPhi = weightPhi + weight
             numPhi = numPhi +1
-            divPhi = [(divPhi[j] + getDivBernoulli(allSuccessRates[i*numTeams + j],trueSuccessRates[j])) for j in range(numTeams)]
+            divPhi = [(divPhi[j] + getDivBernoulli(trueSuccessRates[j],allSuccessRates[i*numTeams + j])) for j in range(numTeams)]
 
             pPhi = pPhi + math.log(weight)
 
@@ -70,7 +70,7 @@ def plotUpperRegretBound(ttm,T):
     pPhi = pPhi / numPhi
     divPhi = [(float(d) / numPhi) for d in divPhi]
 
-    pPsi = pPhi / numPhi
+    pPsi = pPsi / numPsi
     divPsi = [(float(d) / numPsi) for d in divPsi]
 
 
@@ -84,7 +84,10 @@ def plotUpperRegretBound(ttm,T):
     #Calculate Phi and Psi
     #For each t<T
     print "Calculating optimization problem over all times"
+    #calculate constants which do not depend on t or play count
     const = pPsi - pPhi - math.log(numPsi/float(numPhi)) - math.log ( math.log(1.0/confidenceDelta**2))
+    optPlayCount = []
+    optValue = []
     for t in range(T):
         if (t == T/t):
             print "Halfway done with times"
